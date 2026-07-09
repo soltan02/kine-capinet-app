@@ -1,0 +1,11 @@
+appId: com.kinecabinet.app
+productName: Kine Cabinet
+files:
+  - dist/**
+  - electron/**
+  - package.json
+directories:
+  output: dist-electron
+win:
+  target: portable
+  sign: electron/fake-sign.cmd
