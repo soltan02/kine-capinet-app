@@ -1,19 +1,41 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// ─── Replace these with your Supabase project credentials ────
-// Go to: https://supabase.com → Project Settings → API
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://YOUR_PROJECT.supabase.co';
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'YOUR_ANON_KEY';
+// ─── Backend configuration ────────────────────────────────────
+// A single-clinic dev/demo build can set these in .env (unchanged
+// behavior). A generic, sellable build ships with these blank, and the
+// clinic's own backend is configured at runtime — see clinicConfig.ts —
+// so one app build/Play Store listing can serve any clinic.
+let currentUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+let currentAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    storage: AsyncStorage,
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: false,
-  },
-});
+function buildClient(url: string, anonKey: string): SupabaseClient {
+  return createClient(url || 'https://placeholder.supabase.co', anonKey || 'placeholder-anon-key', {
+    auth: {
+      storage: AsyncStorage,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: false,
+    },
+  });
+}
+
+// Reassignable singleton — reassigning this from initSupabase() is visible
+// to every other module's `import { supabase }` via ES module live bindings,
+// so no call site elsewhere needs to change.
+export let supabase = buildClient(currentUrl, currentAnonKey);
+
+/** True once real backend credentials are in place (from .env or a saved clinic config). */
+export function hasBackendConfig(): boolean {
+  return !!(currentUrl && currentAnonKey);
+}
+
+/** Points the app at a different Supabase project at runtime (used by clinicConfig.ts). */
+export function initSupabase(url: string, anonKey: string) {
+  currentUrl = url;
+  currentAnonKey = anonKey;
+  supabase = buildClient(url, anonKey);
+}
 
 // ─── Type definitions ─────────────────────────────────────────
 export type UserRole = 'admin' | 'therapist' | 'receptionist';

@@ -56,6 +56,7 @@ export default function BillingScreen({ navigation }: { navigation: any }) {
   const { t } = useTranslation();
   const { can } = usePermissions();
   const canManage = can('billing:manage');
+  const canViewTotals = can('billing:viewTotals');
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -139,13 +140,15 @@ export default function BillingScreen({ navigation }: { navigation: any }) {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
       >
-        {/* Summary Cards */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.summaryScroll}>
-          <SummaryCard label={t('billing.totalRevenue')} amount={totalRevenue} icon="stats-chart" color={Colors.primary} />
-          <SummaryCard label={t('billing.monthlyRevenue')} amount={monthRevenue} icon="calendar" color={Colors.success} />
-          <SummaryCard label={t('billing.methods.cash')} amount={cashTotal} icon="cash-outline" color={Colors.cash} />
-          <SummaryCard label={t('billing.methods.cnam')} amount={cnamTotal} icon="shield-checkmark-outline" color={Colors.cnam} />
-        </ScrollView>
+        {/* Summary Cards — revenue totals are admin-only */}
+        {canViewTotals && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.summaryScroll}>
+            <SummaryCard label={t('billing.totalRevenue')} amount={totalRevenue} icon="stats-chart" color={Colors.primary} />
+            <SummaryCard label={t('billing.monthlyRevenue')} amount={monthRevenue} icon="calendar" color={Colors.success} />
+            <SummaryCard label={t('billing.methods.cash')} amount={cashTotal} icon="cash-outline" color={Colors.cash} />
+            <SummaryCard label={t('billing.methods.cnam')} amount={cnamTotal} icon="shield-checkmark-outline" color={Colors.cnam} />
+          </ScrollView>
+        )}
 
         {/* Method filter */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>

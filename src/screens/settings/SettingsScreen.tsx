@@ -9,6 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { Alert } from '../../lib/alert';
+import * as Updates from 'expo-updates';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,7 +36,15 @@ export default function SettingsScreen({ navigation }: { navigation: any }) {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       // Web can apply instantly with a reload
       window.location.reload();
-    } else {
+      return;
+    }
+    // Native: reload the JS bundle so every screen's styles are rebuilt
+    // with the new palette — no manual app restart needed.
+    try {
+      await Updates.reloadAsync();
+    } catch {
+      // Not available in this runtime (e.g. Expo Go) — fall back to asking
+      // the user to restart manually.
       Alert.alert(t('settings.appearance'), t('settings.themeRestart'));
     }
   };

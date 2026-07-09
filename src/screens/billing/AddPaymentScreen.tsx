@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase, PaymentMethod, PaymentStatus, Payment } from '../../lib/supabase';
-import { useAuthStore } from '../../lib/store';
+import { useAuthStore, useClientsStore } from '../../lib/store';
 import { usePermissions } from '../../lib/permissions';
 import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, TAB_BAR_CLEARANCE } from '../../constants/theme';
 
@@ -24,10 +24,11 @@ interface Props {
   route?: { params?: { clientId?: string; appointmentId?: string; payment?: Payment } };
 }
 
+// 'card' intentionally not offered — clinics reported almost nobody pays by
+// card; the 'card' value stays supported in the type/DB for any past records.
 const METHODS: { key: PaymentMethod; icon: string; color: string }[] = [
   { key: 'cash', icon: 'cash-outline', color: Colors.cash },
   { key: 'cnam', icon: 'shield-checkmark-outline', color: Colors.cnam },
-  { key: 'card', icon: 'card-outline', color: Colors.cardPayment },
   { key: 'other', icon: 'ellipsis-horizontal-outline', color: Colors.other },
 ];
 
@@ -36,6 +37,7 @@ const STATUSES: PaymentStatus[] = ['paid', 'pending', 'partial', 'waived'];
 export default function AddPaymentScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const { profile } = useAuthStore();
+  const { clients, fetchClients } = useClientsStore();
   const { can } = usePermissions();
   const editPayment = route?.params?.payment;
   const isEditing = !!editPayment;
@@ -47,8 +49,17 @@ export default function AddPaymentScreen({ navigation, route }: Props) {
   const [packageName, setPackageName] = useState('');
   const [packageSessions, setPackageSessions] = useState('');
   const [loading, setLoading] = useState(false);
-  const clientId = route?.params?.clientId ?? editPayment?.client_id;
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(
+    route?.params?.clientId ?? editPayment?.client_id ?? null
+  );
   const appointmentId = route?.params?.appointmentId ?? editPayment?.appointment_id;
+  // Only show the picker when no patient was already implied by how this
+  // screen was opened (e.g. from the top-level Billing tab's "+" button).
+  const needsClientPicker = !route?.params?.clientId && !editPayment;
+
+  useEffect(() => {
+    if (needsClientPicker) fetchClients();
+  }, [needsClientPicker]);
 
   const handleSave = async () => {
     if (loading) return;
@@ -61,7 +72,7 @@ export default function AddPaymentScreen({ navigation, route }: Props) {
       Alert.alert(t('common.error'), t('billing.invalidAmount'));
       return;
     }
-    if (!clientId) {
+    if (!selectedClientId) {
       Alert.alert(t('common.error'), t('billing.clientRequired'));
       return;
     }
@@ -81,7 +92,7 @@ export default function AddPaymentScreen({ navigation, route }: Props) {
           notes: paymentNotes || null,
         }).eq('id', editPayment.id)
       : await supabase.from('payments').insert([{
-          client_id: clientId,
+          client_id: selectedClientId,
           appointment_id: appointmentId || null,
           amount: Number(amount),
           payment_method: method,
@@ -95,7 +106,7 @@ export default function AddPaymentScreen({ navigation, route }: Props) {
     await supabase.from('audit_logs').insert([{
       user_id: profile?.id,
       action: isEditing ? 'edit_payment' : 'add_payment',
-      details: t('billing.paymentLog', { amount: Number(amount).toFixed(3), clientId }),
+      details: t('billing.paymentLog', { amount: Number(amount).toFixed(3), clientId: selectedClientId }),
     }]);
     setLoading(false);
     if (error) {
@@ -121,6 +132,33 @@ export default function AddPaymentScreen({ navigation, route }: Props) {
         </View>
 
         <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+          {/* Patient (only when not already implied by how this screen was opened) */}
+          {needsClientPicker && (
+            <View style={styles.sectionCard}>
+              <Text style={styles.sectionLabel}>{t('billing.selectClient')}</Text>
+              {clients.length === 0 ? (
+                <Text style={styles.helperText}>{t('appointments.noClientsAvailable')}</Text>
+              ) : (
+                <View style={styles.clientList}>
+                  {clients.map((client) => {
+                    const isSelected = selectedClientId === client.id;
+                    return (
+                      <TouchableOpacity
+                        key={client.id}
+                        style={[styles.clientChip, isSelected && styles.clientChipActive]}
+                        onPress={() => setSelectedClientId(client.id)}
+                      >
+                        <Text style={[styles.clientChipText, isSelected && styles.clientChipTextActive]}>
+                          {client.first_name} {client.last_name}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+          )}
+
           {/* Amount */}
           <View style={styles.amountCard}>
             <Text style={styles.amountLabel}>{t('billing.amount')}</Text>
@@ -321,6 +359,35 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: Spacing.md,
+  },
+  helperText: {
+    color: Colors.textMuted,
+    fontSize: FontSize.sm,
+  },
+  clientList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  clientChip: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    backgroundColor: Colors.inputBg,
+  },
+  clientChipActive: {
+    borderColor: Colors.accent,
+    backgroundColor: Colors.accentLight,
+  },
+  clientChipText: {
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    fontSize: FontSize.sm,
+  },
+  clientChipTextActive: {
+    color: Colors.accent,
   },
   methodGrid: {
     flexDirection: 'row',

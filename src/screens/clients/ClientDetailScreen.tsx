@@ -100,6 +100,7 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
 
   const canManageSessions = can('sessions:manage');
   const canManageBilling = can('billing:manage');
+  const canViewBillingTotals = can('billing:viewTotals');
 
   const confirmDelete = (title: string, onConfirm: () => Promise<void>) => {
     Alert.alert(title, undefined, [
@@ -363,12 +364,14 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
             <EmptyState icon="cash-outline" message={t('billing.noBillingRecords')} iconSize={56} />
           ) : (
             <>
-              <View style={styles.billingTotal}>
-                <Text style={styles.billingTotalLabel}>{t('billing.totalRevenue')}</Text>
-                <Text style={styles.billingTotalAmount}>
-                  {payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0).toFixed(3)} TND
-                </Text>
-              </View>
+              {canViewBillingTotals && (
+                <View style={styles.billingTotal}>
+                  <Text style={styles.billingTotalLabel}>{t('billing.totalRevenue')}</Text>
+                  <Text style={styles.billingTotalAmount}>
+                    {payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0).toFixed(3)} TND
+                  </Text>
+                </View>
+              )}
               {payments.map((p) => {
                 const methodColor = PAYMENT_METHOD_COLORS[p.payment_method];
                 return (

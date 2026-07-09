@@ -100,13 +100,14 @@ const callFn = async (fn, token, body) => {
     const { data: sTher } = await therS.client.from('session_logs').select('*').eq('client_id', cIns.id);
     ok('Sessions: therapist CAN read clinical notes', (sTher || []).length >= 1);
 
-    // 8. PAYMENTS — receptionist create OK; therapist blocked; therapist read OK
+    // 8. PAYMENTS — all 3 roles can create/manage payments (revenue totals
+    // are restricted to admin only at the app UI level, not via RLS)
     const { error: pRec } = await recS.client.from('payments')
       .insert([{ client_id: cIns.id, amount: 50, payment_method: 'cash', status: 'paid', created_by: receptionistU.id, paid_at: new Date().toISOString() }]);
     ok('Payments: receptionist can CREATE', !pRec, pRec?.message);
     const { error: pTher } = await therS.client.from('payments')
       .insert([{ client_id: cIns.id, amount: 99, payment_method: 'cash', status: 'paid', created_by: therapistU.id, paid_at: new Date().toISOString() }]);
-    ok('Payments: therapist BLOCKED from creating (read-only)', !!pTher, pTher ? '' : 'insert unexpectedly succeeded');
+    ok('Payments: therapist can CREATE', !pTher, pTher?.message);
     const { data: pReadT } = await therS.client.from('payments').select('*').eq('client_id', cIns.id);
     ok('Payments: therapist CAN read', (pReadT || []).length >= 1);
 

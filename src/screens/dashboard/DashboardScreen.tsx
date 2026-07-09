@@ -228,7 +228,7 @@ export default function DashboardScreen({ navigation }: { navigation: any }) {
             <StatCard icon="people" label={t('dashboard.totalClients')} value={clients.length} color={Colors.primary} />
             <StatCard icon="calendar" label={t('dashboard.todayAppointments')} value={todayAppointments.length} color={Colors.accent} />
             <StatCard icon="checkmark-circle" label={t('dashboard.thisWeek')} value={`${thisWeekSessions} ${t('dashboard.sessions')}`} color={Colors.success} />
-            {can('billing:view') && (
+            {can('billing:viewTotals') && (
               <StatCard icon="cash" label={t('dashboard.monthRevenue')} value={`${monthRevenue.toFixed(0)} TND`} color={Colors.secondary} />
             )}
             <StatCard icon="stats-chart" label={t('dashboard.thisMonth')} value={`${thisMonthSessions} ${t('dashboard.sessions')}`} color={Colors.info} />

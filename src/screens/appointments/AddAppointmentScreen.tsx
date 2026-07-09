@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, TAB_BAR_CLEARANCE } from '../../constants/theme';
-import { AppointmentStatus, AppointmentType, supabase } from '../../lib/supabase';
+import { Appointment, AppointmentStatus, AppointmentType, supabase } from '../../lib/supabase';
 import { useAppointmentsStore, useAuthStore, useClientsStore } from '../../lib/store';
 import DateTimeField from '../../components/DateTimeField';
 
@@ -26,7 +26,7 @@ const toMinutes = (hhmm: string) => {
 
 interface Props {
   navigation: any;
-  route?: { params?: { defaultDate?: string; clientId?: string } };
+  route?: { params?: { defaultDate?: string; clientId?: string; appointment?: Appointment } };
 }
 
 const TYPES: AppointmentType[] = ['initial', 'session', 'assessment', 'discharge'];
@@ -35,15 +35,17 @@ const STATUSES: AppointmentStatus[] = ['scheduled', 'confirmed', 'completed', 'c
 export default function AddAppointmentScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const { clients, fetchClients } = useClientsStore();
-  const { addAppointment } = useAppointmentsStore();
+  const { addAppointment, updateAppointment } = useAppointmentsStore();
   const profile = useAuthStore((state) => state.profile);
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(route?.params?.clientId || null);
-  const [date, setDate] = useState(route?.params?.defaultDate || '');
-  const [startTime, setStartTime] = useState('09:00');
-  const [duration, setDuration] = useState('45');
-  const [type, setType] = useState<AppointmentType>('session');
-  const [status, setStatus] = useState<AppointmentStatus>('scheduled');
-  const [notes, setNotes] = useState('');
+  const editAppointment = route?.params?.appointment;
+  const isEditing = !!editAppointment;
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(editAppointment?.client_id || route?.params?.clientId || null);
+  const [date, setDate] = useState(editAppointment?.date || route?.params?.defaultDate || '');
+  const [startTime, setStartTime] = useState(editAppointment?.start_time?.slice(0, 5) || '09:00');
+  const [duration, setDuration] = useState(String(editAppointment?.duration_minutes || '45'));
+  const [type, setType] = useState<AppointmentType>(editAppointment?.type || 'session');
+  const [status, setStatus] = useState<AppointmentStatus>(editAppointment?.status || 'scheduled');
+  const [notes, setNotes] = useState(editAppointment?.notes || '');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -65,13 +67,18 @@ export default function AddAppointmentScreen({ navigation, route }: Props) {
     setSaving(true);
 
     // Conflict detection: same day, overlapping time, same therapist or same patient
+    // (excluding this appointment itself when editing)
     const newStart = toMinutes(startTime);
     const newEnd = newStart + Number(duration);
-    const { data: sameDay } = await supabase
+    let conflictQuery = supabase
       .from('appointments')
       .select('id, start_time, duration_minutes, assigned_to, client_id, status')
       .eq('date', date)
       .neq('status', 'cancelled');
+    if (isEditing && editAppointment) {
+      conflictQuery = conflictQuery.neq('id', editAppointment.id);
+    }
+    const { data: sameDay } = await conflictQuery;
     const conflict = (sameDay || []).find((a: any) => {
       const s = toMinutes(a.start_time);
       const e = s + (a.duration_minutes || 0);
@@ -86,7 +93,7 @@ export default function AddAppointmentScreen({ navigation, route }: Props) {
       return;
     }
 
-    const { error } = await addAppointment({
+    const payload = {
       client_id: selectedClientId,
       assigned_to: profile?.id,
       date,
@@ -95,12 +102,15 @@ export default function AddAppointmentScreen({ navigation, route }: Props) {
       type,
       status,
       notes,
-      created_by: profile?.id,
-    });
+    };
+
+    const { error } = isEditing && editAppointment
+      ? await updateAppointment(editAppointment.id, payload)
+      : await addAppointment({ ...payload, created_by: profile?.id });
     setSaving(false);
 
     if (!error) {
-      Alert.alert(t('common.success'), t('appointments.saved'));
+      Alert.alert(t('common.success'), isEditing ? t('appointments.updated') : t('appointments.saved'));
       navigation.goBack();
     } else if (error.includes('appointment_conflict')) {
       Alert.alert(t('appointments.conflictTitle'), t('appointments.conflictMessage'));
@@ -115,7 +125,7 @@ export default function AddAppointmentScreen({ navigation, route }: Props) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('appointments.addAppointment')}</Text>
+        <Text style={styles.headerTitle}>{isEditing ? t('appointments.editAppointment') : t('appointments.addAppointment')}</Text>
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
           {saving ? <ActivityIndicator size="small" color={Colors.white} /> : <Text style={styles.saveBtnText}>{t('common.save')}</Text>}
         </TouchableOpacity>

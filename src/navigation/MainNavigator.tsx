@@ -51,6 +51,7 @@ function DashboardStack() {
       <Stack.Screen name="DashboardHome" component={DashboardScreen} />
       <Stack.Screen name="AddClient" component={AddEditClientScreen} />
       <Stack.Screen name="AppointmentDetail" component={AppointmentDetailScreen} />
+      <Stack.Screen name="AddAppointment" component={AddAppointmentScreen} />
     </Stack.Navigator>
   );
 }

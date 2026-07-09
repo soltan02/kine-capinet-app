@@ -1,4 +1,5 @@
 ﻿import * as SecureStore from 'expo-secure-store';
+import { hashPassword, verifyPassword, isLegacyHash } from './passwordHash';
 
 const LOCAL_USERS_KEY = 'kine_local_users';
 const LOCAL_MODE_KEY = 'kine_local_mode';
@@ -10,16 +11,6 @@ export type LocalUser = {
   full_name: string;
   role: 'admin' | 'therapist' | 'receptionist';
 };
-
-function simpleHash(password: string): string {
-  let hash = 0;
-  for (let i = 0; i < password.length; i++) {
-    const char = password.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return Math.abs(hash).toString(16).padStart(8, '0') + password.length.toString(16);
-}
 
 async function getLocalUsers(): Promise<LocalUser[]> {
   const raw = await SecureStore.getItemAsync(LOCAL_USERS_KEY);
@@ -66,7 +57,7 @@ export async function addLocalUser(user: Omit<LocalUser, 'id' | 'passwordHash'> 
   const newUser: LocalUser = {
     id: `local_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
     email: user.email.toLowerCase(),
-    passwordHash: simpleHash(user.password),
+    passwordHash: hashPassword(user.password),
     full_name: user.full_name,
     role: user.role,
   };
@@ -77,9 +68,19 @@ export async function addLocalUser(user: Omit<LocalUser, 'id' | 'passwordHash'> 
 
 export async function verifyLocalCredentials(email: string, password: string): Promise<LocalUser | null> {
   const users = await getLocalUsers();
-  const user = users.find(u => u.email === email.toLowerCase());
-  if (!user) return null;
-  if (user.passwordHash !== simpleHash(password)) return null;
+  const idx = users.findIndex(u => u.email === email.toLowerCase());
+  if (idx < 0) return null;
+  const user = users[idx];
+  if (!verifyPassword(password, user.passwordHash)) return null;
+
+  // Transparent migration: upgrade a legacy (pre-bcrypt) hash to bcrypt on
+  // the next successful login — never locks out an existing local user.
+  if (isLegacyHash(user.passwordHash)) {
+    const migrated = { ...user, passwordHash: hashPassword(password) };
+    users[idx] = migrated;
+    await saveLocalUsers(users);
+    return migrated;
+  }
   return user;
 }
 

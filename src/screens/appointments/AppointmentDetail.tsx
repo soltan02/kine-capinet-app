@@ -69,7 +69,11 @@ export default function AppointmentDetail({ navigation, route }: Props) {
 
   return (
     <SafeAreaView style={CommonStyles.safeArea} edges={['top', 'bottom']}>
-      <ScreenHeader title={t('appointments.editAppointment')} onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={t('appointments.editAppointment')}
+        onBack={() => navigation.goBack()}
+        actions={can('appointments:manage') ? [{ icon: 'pencil-outline', onPress: () => navigation.navigate('AddAppointment', { appointment }), accessibilityLabel: t('common.edit') }] : []}
+      />
 
       <View style={styles.card}>
         <Text style={styles.title}>{clientName}</Text>

@@ -13,6 +13,7 @@ const ROLE_HIERARCHY: Record<UserRole, number> = {
 export type Permission =
   | 'billing:view'
   | 'billing:manage'
+  | 'billing:viewTotals'
   | 'clients:view'
   | 'clients:manage'
   | 'appointments:view'
@@ -32,6 +33,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   admin: [
     'billing:view',
     'billing:manage',
+    'billing:viewTotals',
     'clients:view',
     'clients:manage',
     'appointments:view',
@@ -55,6 +57,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'sessions:view',
     'sessions:manage',
     'billing:view',
+    'billing:manage',
     'settings:view',
     'dashboard:view',
     'ai:analyze',

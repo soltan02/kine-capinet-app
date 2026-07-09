@@ -1,13 +1,19 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+﻿// Must be the very first import: gives bcryptjs (used by local-mode auth,
+// see src/lib/passwordHash.ts) a real CSPRNG instead of Math.random() on RN.
+import 'react-native-get-random-values';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { supabase } from './lib/supabase';
+import { supabase, hasBackendConfig } from './lib/supabase';
+import { loadStoredClinicConfig } from './lib/clinicConfig';
 import { useAuthStore } from './lib/store';
 import { initI18n } from './lib/i18n';
 import { isLocalModeEnabled, LocalUser } from './lib/localAuth';
 import { hasSeenOnboarding, markOnboardingSeen } from './lib/onboarding';
+import { checkForUpdate, openUpdateUrl } from './lib/updateChecker';
+import { Alert } from './lib/alert';
 import { Colors, FontSize, Spacing, loadStoredTheme } from './constants/theme';
 
 export default function AppRoot() {
@@ -17,6 +23,8 @@ export default function AppRoot() {
   const [startupError, setStartupError] = useState<string | null>(null);
   const [useLocalAuth, setUseLocalAuth] = useState<boolean | null>(null);
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
+  // null = still checking; false = no backend configured yet (show setup screen); true = ready
+  const [backendReady, setBackendReady] = useState<boolean | null>(null);
 
   // Screens are required only AFTER the stored theme has been applied, so
   // their module-level StyleSheet.create calls capture the active palette.
@@ -26,15 +34,51 @@ export default function AppRoot() {
       LoginScreen: require('./screens/auth/LoginScreen').default,
       MainNavigator: require('./navigation/MainNavigator').default,
       OnboardingScreen: require('./screens/onboarding/OnboardingScreen').default,
+      ClinicSetupScreen: require('./screens/setup/ClinicSetupScreen').default,
     };
   }, [themeReady]);
 
+  // Resolve the backend config once on mount: use .env if present (existing
+  // single-clinic builds — unchanged), else check for a previously-saved
+  // clinic setup code, else fall through to the setup screen.
+  useEffect(() => {
+    let mounted = true;
+    if (hasBackendConfig()) {
+      setBackendReady(true);
+    } else {
+      loadStoredClinicConfig().then((found) => {
+        if (mounted) setBackendReady(found);
+      });
+    }
+    return () => { mounted = false; };
+  }, []);
+
+  const handleClinicSetupDone = () => setBackendReady(true);
+
+  // Theme + i18n are independent of the backend config — they must load even
+  // while the clinic setup screen (which also needs the theme) is showing.
   useEffect(() => {
     let mounted = true;
 
     loadStoredTheme().finally(() => {
       if (mounted) setThemeReady(true);
     });
+
+    initI18n()
+      .then(() => {
+        if (mounted) setI18nReady(true);
+      })
+      .catch((err) => {
+        console.error('Failed to init i18n:', err);
+        if (mounted) setStartupError('Failed to initialize app');
+      });
+
+    return () => { mounted = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!backendReady) return;
+    let mounted = true;
 
     const syncSession = async (nextSession: any) => {
       if (!mounted) return;
@@ -59,15 +103,6 @@ export default function AppRoot() {
         }
       }
     };
-
-    initI18n()
-      .then(() => {
-        if (mounted) setI18nReady(true);
-      })
-      .catch((err) => {
-        console.error('Failed to init i18n:', err);
-        if (mounted) setStartupError('Failed to initialize app');
-      });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string, session: any) => {
       if (!mounted) return;
@@ -111,7 +146,7 @@ export default function AppRoot() {
       subscription.unsubscribe();
       clearTimeout(initTimeout);
     };
-  }, []);
+  }, [backendReady]);
 
   const handleLocalLogin = async (user: LocalUser) => {
     setLocalUser(user);
@@ -133,6 +168,25 @@ export default function AppRoot() {
     return () => { mounted = false; };
   }, [accountId]);
 
+  // Check once per session, after login, whether a newer APK is available.
+  // Silent no-op if unreachable/offline/already up to date — never blocks usage.
+  useEffect(() => {
+    if (!accountId) return;
+    let mounted = true;
+    checkForUpdate().then((result) => {
+      if (!mounted || !result.available || !result.apkUrl) return;
+      Alert.alert(
+        'Nouvelle version disponible',
+        `Version ${result.latestVersion} disponible.${result.notes ? '\n' + result.notes : ''}\n\nMettre à jour maintenant ?`,
+        [
+          { text: 'Plus tard', style: 'cancel' },
+          { text: 'Mettre à jour', onPress: () => openUpdateUrl(result.apkUrl!) },
+        ]
+      );
+    });
+    return () => { mounted = false; };
+  }, [accountId]);
+
   const handleOnboardingDone = () => {
     if (accountId) markOnboardingSeen(accountId);
     setShowOnboarding(false);
@@ -147,9 +201,28 @@ export default function AppRoot() {
     );
   }
 
+  if (!i18nReady || !screens || backendReady === null) {
+    return (
+      <View style={styles.splash}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  if (!backendReady) {
+    const { ClinicSetupScreen } = screens;
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <ClinicSetupScreen onDone={handleClinicSetupDone} />
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    );
+  }
+
   const pendingOnboardingCheck = (useLocalAuth ? !!localUser : !!session) && showOnboarding === null;
 
-  if (loading || !i18nReady || !screens || useLocalAuth === null || pendingOnboardingCheck) {
+  if (loading || useLocalAuth === null || pendingOnboardingCheck) {
     return (
       <View style={styles.splash}>
         <ActivityIndicator size="large" color={Colors.primary} />

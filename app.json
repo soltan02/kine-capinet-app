@@ -3,7 +3,7 @@
     "owner": "soltan0102",
     "name": "Kine Cabinet",
     "slug": "kine-cabinet-app",
-    "version": "1.6.0",
+    "version": "1.6.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -19,7 +19,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.kinecabinet.app",
-      "versionCode": 7
+      "versionCode": 10
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -38,8 +38,6 @@
       "expo-sharing"
     ],
     "extra": {
-      "supabaseUrl": "${EXPO_PUBLIC_SUPABASE_URL}",
-      "supabaseAnonKey": "${EXPO_PUBLIC_SUPABASE_ANON_KEY}",
       "eas": {
         "projectId": "1d64204e-f88e-41b1-8eba-79ed05b84449"
       }
