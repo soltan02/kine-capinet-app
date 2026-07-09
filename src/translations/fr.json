@@ -357,6 +357,16 @@
     "changePassword": "Changer le mot de passe",
     "passwordTooShort": "Le mot de passe doit contenir au moins 6 caractères",
     "passwordUpdateFailed": "Échec de la mise à jour du mot de passe",
+    "email": "E-mail",
+    "newEmail": "Nouvelle adresse e-mail",
+    "updateEmail": "Mettre à jour l'e-mail",
+    "invalidEmail": "Veuillez entrer une adresse e-mail valide",
+    "emailConfirmationSent": "Un e-mail de confirmation a été envoyé à la nouvelle adresse. Le changement prendra effet une fois le lien confirmé.",
+    "emailUpdated": "Adresse e-mail mise à jour",
+    "emailUpdateFailed": "Échec de la mise à jour de l'e-mail",
+    "deleteUserConfirm": "Supprimer {{name}} ?",
+    "deleteUserWarning": "Cette action est définitive. L'utilisateur perdra immédiatement l'accès à l'application.",
+    "deleteUserFailed": "Échec de la suppression de l'utilisateur",
     "logout": "Déconnexion",
     "logoutConfirm": "Voulez-vous vraiment vous déconnecter ?"
   }

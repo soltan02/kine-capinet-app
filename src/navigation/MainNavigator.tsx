@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Colors, Shadow, BorderRadius } from '../constants/theme';
@@ -95,6 +96,12 @@ function SettingsStack() {
 export default function MainNavigator() {
   const { t } = useTranslation();
   const { can } = usePermissions();
+  const insets = useSafeAreaInsets();
+  // Devices with a persistent 3-button nav bar report a larger bottom inset
+  // than gesture-nav devices — add it to the fixed offset so the floating
+  // tab bar clears the system bar on every phone, instead of a fixed value
+  // that only works when the inset is near zero.
+  const tabBarBottom = insets.bottom + (Platform.OS === 'ios' ? 16 : 10);
 
   const showBilling = can('billing:view');
   const showCalendar = can('appointments:manage');
@@ -113,7 +120,7 @@ export default function MainNavigator() {
           position: 'absolute',
           left: 16,
           right: 16,
-          bottom: Platform.OS === 'ios' ? 26 : 14,
+          bottom: tabBarBottom,
           height: 64,
           borderRadius: BorderRadius.full,
           backgroundColor: Colors.tabBar,

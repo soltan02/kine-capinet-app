@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { Alert } from '../../lib/alert';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -26,6 +27,8 @@ export default function EditUserScreen({ route, navigation }: { route: any; navi
   const [fullName, setFullName] = useState(user.full_name || '');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [emailLoading, setEmailLoading] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const isSelf = currentProfile?.id === user.id;
@@ -62,6 +65,16 @@ export default function EditUserScreen({ route, navigation }: { route: any; navi
     else Alert.alert(t('common.success'), t('settings.passwordUpdated'));
   };
 
+  // FunctionsHttpError's own .message is a generic wrapper — the real
+  // reason is in the (plain-text) response body.
+  const realErrorMessage = async (error: any): Promise<string | undefined> => {
+    try {
+      return await error?.context?.text?.();
+    } catch {
+      return undefined;
+    }
+  };
+
   const changePasswordForOther = async () => {
     if (newPassword.length < 6) {
       Alert.alert(t('common.error'), t('settings.passwordTooShort'));
@@ -77,11 +90,45 @@ export default function EditUserScreen({ route, navigation }: { route: any; navi
     });
     setLoading(false);
     if (error) {
-      Alert.alert(t('common.error'), error.message || t('settings.passwordUpdateFailed'));
+      Alert.alert(t('common.error'), (await realErrorMessage(error)) || error.message || t('settings.passwordUpdateFailed'));
     } else {
       Alert.alert(t('common.success'), t('settings.passwordUpdated'));
       setNewPassword('');
       setConfirmPassword('');
+    }
+  };
+
+  const changeEmail = async () => {
+    const trimmed = newEmail.trim().toLowerCase();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      Alert.alert(t('common.error'), t('settings.invalidEmail'));
+      return;
+    }
+    setEmailLoading(true);
+    if (isSelf) {
+      // Self-service change: Supabase emails a confirmation link to the new
+      // address; the change only takes effect once that link is clicked.
+      const { error } = await supabase.auth.updateUser({ email: trimmed });
+      setEmailLoading(false);
+      if (error) {
+        Alert.alert(t('common.error'), error.message);
+      } else {
+        Alert.alert(t('common.success'), t('settings.emailConfirmationSent'));
+        setNewEmail('');
+      }
+      return;
+    }
+    // Admin changing someone else's email — takes effect immediately, no
+    // confirmation link needed (mirrors admin-update-password's pattern).
+    const { error } = await supabase.functions.invoke('admin-manage-user', {
+      body: { action: 'update_email', targetUserId: user.id, newEmail: trimmed },
+    });
+    setEmailLoading(false);
+    if (error) {
+      Alert.alert(t('common.error'), (await realErrorMessage(error)) || error.message || t('settings.emailUpdateFailed'));
+    } else {
+      Alert.alert(t('common.success'), t('settings.emailUpdated'));
+      setNewEmail('');
     }
   };
 
@@ -90,12 +137,28 @@ export default function EditUserScreen({ route, navigation }: { route: any; navi
       <ScreenHeader title={t('settings.editUser')} onBack={() => navigation.goBack()} />
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <View style={styles.container}>
+        <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
           <Text style={styles.label}>{t('settings.fullName')}</Text>
           <TextInput style={styles.input} value={fullName} onChangeText={setFullName} autoCapitalize="words" />
 
           <TouchableOpacity style={styles.saveBtn} onPress={saveName} disabled={loading}>
             {loading ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>{t('common.save')}</Text>}
+          </TouchableOpacity>
+
+          <View style={{ height: Spacing.lg }} />
+
+          <Text style={styles.label}>{t('settings.email')}</Text>
+          <TextInput
+            style={styles.input}
+            placeholder={t('settings.newEmail')}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+            value={newEmail}
+            onChangeText={setNewEmail}
+          />
+          <TouchableOpacity style={styles.saveBtn} onPress={changeEmail} disabled={emailLoading}>
+            {emailLoading ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>{t('settings.updateEmail')}</Text>}
           </TouchableOpacity>
 
           <View style={{ height: Spacing.lg }} />
@@ -113,7 +176,8 @@ export default function EditUserScreen({ route, navigation }: { route: any; navi
               {loading ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>{t('settings.changePassword')}</Text>}
             </TouchableOpacity>
           )}
-        </View>
+          <View style={{ height: Spacing.xxl }} />
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

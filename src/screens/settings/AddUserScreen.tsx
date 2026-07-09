@@ -86,7 +86,13 @@ export default function AddUserScreen({ navigation }: { navigation: any }) {
       });
 
       if (error) {
-        Alert.alert(t('common.error'), error.message || t('settings.createUserFailed'));
+        // FunctionsHttpError's own .message is a generic wrapper — the real
+        // reason (e.g. "email already registered") is in the response body.
+        let realMessage: string | undefined;
+        try {
+          realMessage = await (error as any)?.context?.text?.();
+        } catch { /* ignore */ }
+        Alert.alert(t('common.error'), realMessage || error.message || t('settings.createUserFailed'));
         setLoading(false);
         return;
       }

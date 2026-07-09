@@ -1,5 +1,5 @@
 {
-  "latestVersion": "1.6.3",
+  "latestVersion": "1.6.4",
   "apkUrl": "https://expo.dev/accounts/soltan0102/projects/kine-cabinet-app/builds",
-  "notes": "Corrections : enregistrement des paiements, journal d'audit, mode sombre, sécurité renforcée."
+  "notes": "Gestion des utilisateurs (suppression, e-mail), export PDF des sauvegardes, écran d'accueil animé, correction de la barre de navigation, sécurité renforcée."
 }

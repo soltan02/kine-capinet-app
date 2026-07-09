@@ -5,22 +5,26 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { Alert } from '../../lib/alert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase, Profile, UserRole } from '../../lib/supabase';
+import { useAuthStore } from '../../lib/store';
 import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, TAB_BAR_CLEARANCE } from '../../constants/theme';
-import { isLocalModeEnabled, getAllLocalUsers, updateLocalUserRole, LocalUser } from '../../lib/localAuth';
+import { isLocalModeEnabled, getAllLocalUsers, updateLocalUserRole, deleteLocalUser, LocalUser } from '../../lib/localAuth';
 import ScreenHeader from '../../components/ScreenHeader';
 import { SkeletonList } from '../../components/Skeleton';
 
 export default function UserManagementScreen({ navigation }: { navigation: any }) {
   const { t } = useTranslation();
+  const currentProfile = useAuthStore((s) => s.profile);
   const [users, setUsers] = useState<(Profile | LocalUser)[]>([]);
   const [loading, setLoading] = useState(true);
   const [localMode, setLocalMode] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     checkModeAndFetch();
@@ -68,6 +72,40 @@ export default function UserManagementScreen({ navigation }: { navigation: any }
                 Alert.alert(t('common.error'), error.message);
                 return;
               }
+            }
+            fetchUsers(localMode);
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDelete = (user: Profile | LocalUser) => {
+    Alert.alert(
+      t('settings.deleteUserConfirm', { name: user.full_name }),
+      t('settings.deleteUserWarning'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            setDeletingId(user.id);
+            if (localMode) {
+              await deleteLocalUser(user.id);
+              setDeletingId(null);
+              fetchUsers(localMode);
+              return;
+            }
+            const { error } = await supabase.functions.invoke('admin-manage-user', {
+              body: { action: 'delete', targetUserId: user.id },
+            });
+            setDeletingId(null);
+            if (error) {
+              let realMessage: string | undefined;
+              try { realMessage = await (error as any)?.context?.text?.(); } catch { /* ignore */ }
+              Alert.alert(t('common.error'), realMessage || error.message || t('settings.deleteUserFailed'));
+              return;
             }
             fetchUsers(localMode);
           },
@@ -130,6 +168,19 @@ export default function UserManagementScreen({ navigation }: { navigation: any }
               >
                 <Ionicons name="pencil" size={18} color={Colors.primary} />
               </TouchableOpacity>
+              {currentProfile?.id !== user.id ? (
+                <TouchableOpacity
+                  style={styles.deleteBtn}
+                  onPress={() => handleDelete(user)}
+                  disabled={deletingId === user.id}
+                >
+                  {deletingId === user.id ? (
+                    <ActivityIndicator size="small" color={Colors.danger} />
+                  ) : (
+                    <Ionicons name="trash-outline" size={18} color={Colors.danger} />
+                  )}
+                </TouchableOpacity>
+              ) : null}
             </View>
           ))}
           <View style={{ height: TAB_BAR_CLEARANCE }} />
@@ -201,6 +252,15 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     backgroundColor: Colors.inputBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: Spacing.sm,
+  },
+  deleteBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.dangerLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: Spacing.sm,

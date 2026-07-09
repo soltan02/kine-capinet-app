@@ -6,6 +6,7 @@ import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as SplashScreen from 'expo-splash-screen';
 import { supabase, hasBackendConfig } from './lib/supabase';
 import { loadStoredClinicConfig } from './lib/clinicConfig';
 import { useAuthStore } from './lib/store';
@@ -14,10 +15,15 @@ import { isLocalModeEnabled, LocalUser } from './lib/localAuth';
 import { hasSeenOnboarding, markOnboardingSeen } from './lib/onboarding';
 import { checkForUpdate, openUpdateUrl } from './lib/updateChecker';
 import { Alert } from './lib/alert';
+import AppIntro from './components/AppIntro';
 import { Colors, FontSize, Spacing, loadStoredTheme } from './constants/theme';
+
+// Keep the native splash on screen until AppIntro explicitly hides it.
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function AppRoot() {
   const { session, loading, setSession, setProfile, setLoading, fetchProfile, localUser, setLocalUser, profile } = useAuthStore();
+  const [showIntro, setShowIntro] = useState(true);
   const [i18nReady, setI18nReady] = useState(false);
   const [themeReady, setThemeReady] = useState(false);
   const [startupError, setStartupError] = useState<string | null>(null);
@@ -191,6 +197,10 @@ export default function AppRoot() {
     if (accountId) markOnboardingSeen(accountId);
     setShowOnboarding(false);
   };
+
+  if (showIntro) {
+    return <AppIntro onFinished={() => setShowIntro(false)} />;
+  }
 
   if (startupError) {
     return (
