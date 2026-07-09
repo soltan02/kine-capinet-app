@@ -1,5 +1,5 @@
 {
-  "latestVersion": "1.6.4",
+  "latestVersion": "1.6.5",
   "apkUrl": "https://expo.dev/accounts/soltan0102/projects/kine-cabinet-app/builds",
-  "notes": "Gestion des utilisateurs (suppression, e-mail), export PDF des sauvegardes, écran d'accueil animé, correction de la barre de navigation, sécurité renforcée."
+  "notes": "Suppression du mode de connexion local (non fonctionnel), nouvel écran d'accueil, gestion des utilisateurs améliorée."
 }
