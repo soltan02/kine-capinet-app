@@ -1,5 +1,5 @@
 {
-  "latestVersion": "1.6.5",
+  "latestVersion": "1.6.6",
   "apkUrl": "https://expo.dev/accounts/soltan0102/projects/kine-cabinet-app/builds",
-  "notes": "Suppression du mode de connexion local (non fonctionnel), nouvel écran d'accueil, gestion des utilisateurs améliorée."
+  "notes": "Écran d'accueil corrigé (chargement fluide, sans saut), suppression du mode de connexion local, gestion des utilisateurs améliorée."
 }
