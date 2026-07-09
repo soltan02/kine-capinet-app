@@ -17,6 +17,7 @@ import { supabase, Client, Appointment, Payment, SessionLog, ClientAttachment } 
 import { useClientsStore } from '../../lib/store';
 import { usePermissions } from '../../lib/permissions';
 import { getDocumentUrl } from '../../lib/documents';
+import { exportPatientPdf } from '../../lib/patientExport';
 import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles } from '../../constants/theme';
 import i18n from '../../lib/i18n';
 import ScreenHeader from '../../components/ScreenHeader';
@@ -48,6 +49,30 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
   const { can } = usePermissions();
   const canViewDocs = can('sessions:view'); // admin + kiné only
   const canAnalyze = can('ai:analyze'); // admin + kiné only
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportPdf = () => {
+    if (exporting) return;
+    Alert.alert(
+      t('clients.exportFile'),
+      undefined,
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('clients.exportWithoutBilling'), onPress: () => runExport(false) },
+        { text: t('clients.exportWithBilling'), onPress: () => runExport(true) },
+      ]
+    );
+  };
+
+  const runExport = async (includeBilling: boolean) => {
+    setExporting(true);
+    try {
+      await exportPatientPdf(client, includeBilling);
+    } catch {
+      Alert.alert(t('common.error'), t('clients.exportFailed'));
+    }
+    setExporting(false);
+  };
 
   const openDoc = async (att: ClientAttachment) => {
     try {
@@ -181,7 +206,10 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
       <ScreenHeader
         variant="overlay"
         onBack={() => navigation.goBack()}
-        actions={[{ icon: 'pencil-outline', onPress: () => navigation.navigate('AddClient', { client }), accessibilityLabel: t('common.edit') }]}
+        actions={[
+          ...(canViewDocs ? [{ icon: (exporting ? 'hourglass-outline' : 'document-text-outline') as any, onPress: handleExportPdf, accessibilityLabel: t('clients.exportFile') }] : []),
+          { icon: 'pencil-outline', onPress: () => navigation.navigate('AddClient', { client }), accessibilityLabel: t('common.edit') },
+        ]}
       />
 
       {/* Client hero */}

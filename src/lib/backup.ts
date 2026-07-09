@@ -1,6 +1,7 @@
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { supabase } from './supabase';
+import { esc, table, PDF_STYLES } from './pdfHelpers';
 
 // ─── Admin data export / automated backups ───────────────────
 // Snapshots are created server-side (weekly cron + this on-demand RPC),
@@ -29,20 +30,6 @@ export async function createBackupNow(): Promise<string> {
   return data as string;
 }
 
-function esc(v: unknown): string {
-  if (v === null || v === undefined) return '—';
-  return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function table(headers: string[], rows: (string | number | null | undefined)[][]): string {
-  if (rows.length === 0) return '<p class="empty">Aucune donnée.</p>';
-  return `
-    <table>
-      <thead><tr>${headers.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead>
-      <tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody>
-    </table>`;
-}
-
 function buildBackupHtml(payload: any, dateStr: string): string {
   const clients: any[] = payload.clients || [];
   const appointments: any[] = payload.appointments || [];
@@ -56,16 +43,7 @@ function buildBackupHtml(payload: any, dateStr: string): string {
 
   return `<!doctype html>
 <html><head><meta charset="utf-8">
-<style>
-  body { font-family: -apple-system, Helvetica, Arial, sans-serif; color: #123B36; padding: 24px; }
-  h1 { color: #0D9488; font-size: 22px; margin-bottom: 4px; }
-  .subtitle { color: #666; font-size: 12px; margin-bottom: 24px; }
-  h2 { color: #0D9488; font-size: 16px; border-bottom: 2px solid #CCFBF1; padding-bottom: 6px; margin-top: 28px; }
-  table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 8px; }
-  th { background: #CCFBF1; color: #123B36; text-align: left; padding: 6px 8px; }
-  td { padding: 6px 8px; border-bottom: 1px solid #E7F5F1; }
-  .empty { color: #999; font-style: italic; font-size: 12px; }
-</style></head>
+<style>${PDF_STYLES}</style></head>
 <body>
   <h1>Kine Cabinet — Sauvegarde des données</h1>
   <div class="subtitle">Générée le ${esc(dateStr)} · ${clients.length} patients, ${appointments.length} rendez-vous, ${sessionLogs.length} notes de séance, ${payments.length} paiements</div>
