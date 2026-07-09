@@ -1,7 +1,4 @@
-﻿// Must be the very first import: gives bcryptjs (used by local-mode auth,
-// see src/lib/passwordHash.ts) a real CSPRNG instead of Math.random() on RN.
-import 'react-native-get-random-values';
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -11,7 +8,6 @@ import { supabase, hasBackendConfig } from './lib/supabase';
 import { loadStoredClinicConfig } from './lib/clinicConfig';
 import { useAuthStore } from './lib/store';
 import { initI18n } from './lib/i18n';
-import { isLocalModeEnabled, LocalUser } from './lib/localAuth';
 import { hasSeenOnboarding, markOnboardingSeen } from './lib/onboarding';
 import { checkForUpdate, openUpdateUrl } from './lib/updateChecker';
 import { Alert } from './lib/alert';
@@ -22,12 +18,11 @@ import { Colors, FontSize, Spacing, loadStoredTheme } from './constants/theme';
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function AppRoot() {
-  const { session, loading, setSession, setProfile, setLoading, fetchProfile, localUser, setLocalUser, profile } = useAuthStore();
+  const { session, loading, setSession, setProfile, setLoading, fetchProfile, profile } = useAuthStore();
   const [showIntro, setShowIntro] = useState(true);
   const [i18nReady, setI18nReady] = useState(false);
   const [themeReady, setThemeReady] = useState(false);
   const [startupError, setStartupError] = useState<string | null>(null);
-  const [useLocalAuth, setUseLocalAuth] = useState<boolean | null>(null);
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
   // null = still checking; false = no backend configured yet (show setup screen); true = ready
   const [backendReady, setBackendReady] = useState<boolean | null>(null);
@@ -125,24 +120,14 @@ export default function AppRoot() {
     const initTimeout = setTimeout(async () => {
       if (!mounted) return;
       try {
-        const local = await isLocalModeEnabled();
-        if (local) {
-          if (mounted) {
-            setUseLocalAuth(true);
-            setLoading(false);
-          }
-          return;
-        }
         const { data: { session } } = await supabase.auth.getSession();
         if (mounted) {
           await syncSession(session);
-          setUseLocalAuth(false);
         }
       } catch (error) {
         console.error('Session check failed:', error);
         if (mounted) {
           setLoading(false);
-          setUseLocalAuth(false);
         }
       }
     }, 100);
@@ -154,13 +139,8 @@ export default function AppRoot() {
     };
   }, [backendReady]);
 
-  const handleLocalLogin = async (user: LocalUser) => {
-    setLocalUser(user);
-    setLoading(false);
-  };
-
-  const accountId = useLocalAuth ? localUser?.id : profile?.id;
-  const accountRole = useLocalAuth ? localUser?.role : profile?.role;
+  const accountId = profile?.id;
+  const accountRole = profile?.role;
 
   useEffect(() => {
     if (!accountId) {
@@ -230,9 +210,9 @@ export default function AppRoot() {
     );
   }
 
-  const pendingOnboardingCheck = (useLocalAuth ? !!localUser : !!session) && showOnboarding === null;
+  const pendingOnboardingCheck = !!session && showOnboarding === null;
 
-  if (loading || useLocalAuth === null || pendingOnboardingCheck) {
+  if (loading || pendingOnboardingCheck) {
     return (
       <View style={styles.splash}>
         <ActivityIndicator size="large" color={Colors.primary} />
@@ -240,7 +220,7 @@ export default function AppRoot() {
     );
   }
 
-  const isLoggedIn = useLocalAuth ? !!localUser : !!session;
+  const isLoggedIn = !!session;
   const { LoginScreen, MainNavigator, OnboardingScreen } = screens;
 
   return (
@@ -254,11 +234,7 @@ export default function AppRoot() {
               <MainNavigator />
             )
           ) : (
-            <LoginScreen
-              onLoginSuccess={() => {}}
-              onLocalLoginSuccess={handleLocalLogin}
-              useLocalAuth={useLocalAuth}
-            />
+            <LoginScreen onLoginSuccess={() => {}} />
           )}
         </NavigationContainer>
       </SafeAreaProvider>

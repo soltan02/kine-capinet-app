@@ -41,13 +41,8 @@
     "loginError": "Email ou mot de passe incorrect",
     "forgotPassword": "Mot de passe oublié ?",
     "emailPlaceholder": "votre@email.com",
-    "localMode": "Connexion locale",
-    "localModeOn": "Mode local activé — identifiants chiffrés sur l'appareil",
-    "localModeOff": "Mode en ligne — nécessite une connexion internet",
-    "loginLocal": "Se connecter (local)",
     "emailNotConfirmed": "Email non confirmé. Vérifiez votre boîte mail.",
-    "adminOnlyInfo": "Seuls les administrateurs peuvent créer des comptes. Demandez votre accès à un administrateur via les paramètres.",
-    "localInfo": "Les identifiants sont chiffrés et stockés localement. Seul l'administrateur peut créer des comptes depuis l'application."
+    "adminOnlyInfo": "Seuls les administrateurs peuvent créer des comptes. Demandez votre accès à un administrateur via les paramètres."
   },
   "tabs": {
     "dashboard": "Tableau de bord",

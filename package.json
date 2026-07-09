@@ -16,7 +16,6 @@
     "@react-navigation/stack": "^7.10.10",
     "@supabase/supabase-js": "^2.110.0",
     "base64-arraybuffer": "^1.0.2",
-    "bcryptjs": "^3.0.3",
     "date-fns": "^4.4.0",
     "expo": "~57.0.4",
     "expo-constants": "~57.0.3",
@@ -27,7 +26,6 @@
     "expo-linear-gradient": "^57.0.0",
     "expo-localization": "^57.0.0",
     "expo-print": "~57.0.0",
-    "expo-secure-store": "^57.0.0",
     "expo-sharing": "~57.0.3",
     "expo-splash-screen": "~57.0.2",
     "expo-status-bar": "~57.0.0",
@@ -40,7 +38,6 @@
     "react-native": "0.86.0",
     "react-native-calendars": "^1.1314.0",
     "react-native-gesture-handler": "~2.32.0",
-    "react-native-get-random-values": "~1.11.0",
     "react-native-modal": "^14.0.0-rc.1",
     "react-native-reanimated": "4.5.0",
     "react-native-safe-area-context": "~5.7.0",
@@ -67,7 +64,7 @@
     "build:web": "expo export --platform web",
     "electron:dev": "electron ./electron/main.js",
     "electron:build": "npm run build:web && electron-builder",
-    "qa": "node scripts/qa-suite.js && node scripts/test-local-auth.js"
+    "qa": "node scripts/qa-suite.js"
   },
   "build": {
     "appId": "com.kinecabinet.app",

@@ -10,23 +10,19 @@ import {
   ActivityIndicator,
   Animated,
   StatusBar,
-  Switch,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
-import { verifyLocalCredentials, isLocalModeEnabled, enableLocalMode, LocalUser } from '../../lib/localAuth';
 import { Colors, FontSize, Spacing, BorderRadius, Shadow } from '../../constants/theme';
 
 interface LoginScreenProps {
   onLoginSuccess: () => void;
-  onLocalLoginSuccess?: (user: LocalUser) => void;
-  useLocalAuth?: boolean;
 }
 
-export default function LoginScreen({ onLoginSuccess, onLocalLoginSuccess, useLocalAuth: forceLocal }: LoginScreenProps) {
+export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
@@ -39,22 +35,8 @@ export default function LoginScreen({ onLoginSuccess, onLocalLoginSuccess, useLo
 
   const logoAnim = useState(new Animated.Value(0))[0];
   const formAnim = useState(new Animated.Value(0))[0];
-  const [localMode, setLocalMode] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const checkLocalMode = async () => {
-      if (forceLocal !== undefined) {
-        setLocalMode(forceLocal);
-      } else {
-        const local = await isLocalModeEnabled();
-        setLocalMode(local);
-      }
-    };
-    checkLocalMode();
-  }, [forceLocal]);
-
-  useEffect(() => {
-    if (localMode === null) return;
     Animated.sequence([
       Animated.timing(logoAnim, {
         toValue: 1,
@@ -67,7 +49,7 @@ export default function LoginScreen({ onLoginSuccess, onLocalLoginSuccess, useLo
         useNativeDriver: true,
       }),
     ]).start();
-  }, [localMode]);
+  }, []);
 
   const handleAuth = async () => {
     if (!email.trim() || !password.trim()) {
@@ -78,31 +60,21 @@ export default function LoginScreen({ onLoginSuccess, onLocalLoginSuccess, useLo
     setError('');
 
     try {
-      if (localMode) {
-        const user = await verifyLocalCredentials(email.trim(), password);
-        if (!user) {
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+
+      if (authError) {
+        if (authError.message?.toLowerCase().includes('email not confirmed')) {
+          setError(t('auth.emailNotConfirmed'));
+        } else if (authError.message?.toLowerCase().includes('invalid login credentials')) {
           setError(t('auth.loginError'));
         } else {
-          onLocalLoginSuccess?.(user);
-          onLoginSuccess();
+          setError(authError.message || t('auth.loginError'));
         }
       } else {
-        const { error: authError } = await supabase.auth.signInWithPassword({
-          email: email.trim().toLowerCase(),
-          password,
-        });
-
-        if (authError) {
-          if (authError.message?.toLowerCase().includes('email not confirmed')) {
-            setError(t('auth.emailNotConfirmed'));
-          } else if (authError.message?.toLowerCase().includes('invalid login credentials')) {
-            setError(t('auth.loginError'));
-          } else {
-            setError(authError.message || t('auth.loginError'));
-          }
-        } else {
-          onLoginSuccess();
-        }
+        onLoginSuccess();
       }
     } catch (err: any) {
       setError(err.message || t('common.error'));
@@ -110,14 +82,6 @@ export default function LoginScreen({ onLoginSuccess, onLocalLoginSuccess, useLo
       setLoading(false);
     }
   };
-
-  if (localMode === null) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color={Colors.white} />
-      </View>
-    );
-  }
 
   return (
     <KeyboardAvoidingView
@@ -157,23 +121,6 @@ export default function LoginScreen({ onLoginSuccess, onLocalLoginSuccess, useLo
         </View>
         <Text style={styles.welcomeText}>{t('auth.welcome')}</Text>
         <Text style={styles.subtitleText}>{t('auth.subtitle')}</Text>
-        <View style={styles.modeSwitch}>
-          <Text style={styles.modeLabel}>{t('auth.localMode')}</Text>
-          <Switch
-            value={localMode}
-            onValueChange={async (val) => {
-              setLocalMode(val);
-              if (val) {
-                await enableLocalMode();
-              }
-            }}
-            trackColor={{ false: 'rgba(255,255,255,0.3)', true: Colors.primaryLight }}
-            thumbColor={Colors.white}
-          />
-        </View>
-        <Text style={styles.modeHint}>
-          {localMode ? t('auth.localModeOn') : t('auth.localModeOff')}
-        </Text>
       </Animated.View>
 
       <Animated.View
@@ -266,16 +213,14 @@ export default function LoginScreen({ onLoginSuccess, onLocalLoginSuccess, useLo
             <ActivityIndicator color={Colors.white} />
           ) : (
             <>
-              <Text style={styles.loginButtonText}>{localMode ? t('auth.loginLocal') : t('auth.login')}</Text>
+              <Text style={styles.loginButtonText}>{t('auth.login')}</Text>
               <Ionicons name="arrow-forward" size={18} color={Colors.white} />
             </>
           )}
         </TouchableOpacity>
 
         <View style={styles.infoBox}>
-          <Text style={styles.infoText}>
-            {localMode ? t('auth.localInfo') : t('auth.adminOnlyInfo')}
-          </Text>
+          <Text style={styles.infoText}>{t('auth.adminOnlyInfo')}</Text>
         </View>
       </Animated.View>
     </KeyboardAvoidingView>
@@ -335,28 +280,6 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.8)',
     marginTop: Spacing.xs,
     letterSpacing: 0.3,
-  },
-  modeSwitch: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginTop: Spacing.lg,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
-  },
-  modeLabel: {
-    fontSize: FontSize.sm,
-    fontWeight: '700',
-    color: Colors.white,
-  },
-  modeHint: {
-    fontSize: FontSize.xs,
-    color: 'rgba(255,255,255,0.7)',
-    marginTop: Spacing.xs,
-    textAlign: 'center',
-    paddingHorizontal: Spacing.xl,
   },
   formCard: {
     backgroundColor: Colors.card,

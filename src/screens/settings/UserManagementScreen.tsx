@@ -14,44 +14,31 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase, Profile, UserRole } from '../../lib/supabase';
 import { useAuthStore } from '../../lib/store';
 import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, TAB_BAR_CLEARANCE } from '../../constants/theme';
-import { isLocalModeEnabled, getAllLocalUsers, updateLocalUserRole, deleteLocalUser, LocalUser } from '../../lib/localAuth';
 import ScreenHeader from '../../components/ScreenHeader';
 import { SkeletonList } from '../../components/Skeleton';
 
 export default function UserManagementScreen({ navigation }: { navigation: any }) {
   const { t } = useTranslation();
   const currentProfile = useAuthStore((s) => s.profile);
-  const [users, setUsers] = useState<(Profile | LocalUser)[]>([]);
+  const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [localMode, setLocalMode] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    checkModeAndFetch();
+    fetchUsers();
   }, []);
 
-  const checkModeAndFetch = async () => {
-    const local = await isLocalModeEnabled();
-    setLocalMode(local);
-    fetchUsers(local);
-  };
-
-  const fetchUsers = async (local: boolean) => {
+  const fetchUsers = async () => {
     setLoading(true);
-    if (local) {
-      const localUsers = await getAllLocalUsers();
-      setUsers(localUsers);
-    } else {
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-      setUsers((data as Profile[]) || []);
-    }
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+    setUsers((data as Profile[]) || []);
     setLoading(false);
   };
 
-  const handleRoleChange = async (user: Profile | LocalUser, newRole: UserRole) => {
+  const handleRoleChange = async (user: Profile, newRole: UserRole) => {
     const userName = user.full_name;
     Alert.alert(
       t('settings.changeRole'),
@@ -61,26 +48,22 @@ export default function UserManagementScreen({ navigation }: { navigation: any }
         {
           text: t('common.confirm'),
           onPress: async () => {
-            if (localMode) {
-              await updateLocalUserRole(user.id, newRole);
-            } else {
-              const { error } = await supabase
-                .from('profiles')
-                .update({ role: newRole })
-                .eq('id', user.id);
-              if (error) {
-                Alert.alert(t('common.error'), error.message);
-                return;
-              }
+            const { error } = await supabase
+              .from('profiles')
+              .update({ role: newRole })
+              .eq('id', user.id);
+            if (error) {
+              Alert.alert(t('common.error'), error.message);
+              return;
             }
-            fetchUsers(localMode);
+            fetchUsers();
           },
         },
       ]
     );
   };
 
-  const handleDelete = (user: Profile | LocalUser) => {
+  const handleDelete = (user: Profile) => {
     Alert.alert(
       t('settings.deleteUserConfirm', { name: user.full_name }),
       t('settings.deleteUserWarning'),
@@ -91,12 +74,6 @@ export default function UserManagementScreen({ navigation }: { navigation: any }
           style: 'destructive',
           onPress: async () => {
             setDeletingId(user.id);
-            if (localMode) {
-              await deleteLocalUser(user.id);
-              setDeletingId(null);
-              fetchUsers(localMode);
-              return;
-            }
             const { error } = await supabase.functions.invoke('admin-manage-user', {
               body: { action: 'delete', targetUserId: user.id },
             });
@@ -107,16 +84,16 @@ export default function UserManagementScreen({ navigation }: { navigation: any }
               Alert.alert(t('common.error'), realMessage || error.message || t('settings.deleteUserFailed'));
               return;
             }
-            fetchUsers(localMode);
+            fetchUsers();
           },
         },
       ]
     );
   };
 
-  const getFullName = (user: Profile | LocalUser) => user.full_name;
+  const getFullName = (user: Profile) => user.full_name;
 
-  const getUserRole = (user: Profile | LocalUser): UserRole => user.role as UserRole;
+  const getUserRole = (user: Profile): UserRole => user.role as UserRole;
 
   const RoleBadge = ({ role }: { role: UserRole }) => {
     const isAdmin = role === 'admin';

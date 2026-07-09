@@ -1,12 +1,9 @@
 ﻿import { create } from 'zustand';
 import { supabase, Profile, Client, Appointment } from './supabase';
-import { LocalUser } from './localAuth';
 import type { Session } from '@supabase/supabase-js';
 
 // ─── Auth Store ───────────────────────────────────────────────
 interface AuthState {
-  localUser: LocalUser | null;
-  setLocalUser: (user: LocalUser | null) => void;
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
@@ -20,11 +17,9 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   session: null,
   profile: null,
-  localUser: null,
   loading: true,
   setSession: (session) => set({ session }),
   setProfile: (profile) => set({ profile }),
-  setLocalUser: (localUser) => set({ localUser }),
   setLoading: (loading) => set({ loading }),
   fetchProfile: async (userId: string) => {
     const { data, error } = await supabase
@@ -55,7 +50,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   signOut: async () => {
     // 1. Clear local state FIRST — this immediately unmounts MainNavigator
     //    and shows LoginScreen, so the user sees instant feedback
-    set({ session: null, profile: null, localUser: null, loading: false });
+    set({ session: null, profile: null, loading: false });
     // 2. Fire Supabase signOut in the background (no await!)
     //    This prevents any network hang from blocking the logout flow
     supabase.auth.signOut().catch((err) => {

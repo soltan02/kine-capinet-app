@@ -16,7 +16,6 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { Clipboard } from 'react-native';
 import { supabase, UserRole } from '../../lib/supabase';
-import { addLocalUser, isLocalModeEnabled } from '../../lib/localAuth';
 import { useAuditStore } from '../../lib/auditStore';
 import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, TAB_BAR_CLEARANCE } from '../../constants/theme';
 import ScreenHeader from '../../components/ScreenHeader';
@@ -60,19 +59,6 @@ export default function AddUserScreen({ navigation }: { navigation: any }) {
     setLoading(true);
     try {
       const password = generatePassword();
-      const localMode = await isLocalModeEnabled();
-
-      if (localMode) {
-        await addLocalUser({ full_name: fullName.trim(), email: email.trim().toLowerCase(), role: selectedRole, password });
-        setGeneratedPassword(password);
-        await logAction('create_user', `Utilisateur créé : ${fullName.trim()} (${selectedRole})`);
-        Alert.alert(
-          t('common.success'),
-          `${t('settings.userCreatedAs', { name: fullName.trim(), role: t(`settings.roles.${selectedRole}` as any) })}\n\n${t('settings.generatedPasswordLabel')}: ${password}`
-        );
-        setLoading(false);
-        return;
-      }
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
