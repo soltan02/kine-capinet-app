@@ -1,5 +1,5 @@
 {
-  "latestVersion": "1.6.6",
+  "latestVersion": "1.6.7",
   "apkUrl": "https://expo.dev/accounts/soltan0102/projects/kine-cabinet-app/builds",
-  "notes": "Écran d'accueil corrigé (chargement fluide, sans saut), suppression du mode de connexion local, gestion des utilisateurs améliorée."
+  "notes": "Export PDF par patient, écran d'accueil corrigé, suppression du mode de connexion local, gestion des utilisateurs améliorée."
 }
