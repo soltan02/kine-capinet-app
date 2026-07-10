@@ -18,7 +18,6 @@ import { Appointment, AppointmentStatus, AppointmentType, supabase } from '../..
 import { useAppointmentsStore, useAuthStore, useClientsStore } from '../../lib/store';
 import DateTimeField from '../../components/DateTimeField';
 import SectionLabel from '../../components/SectionLabel';
-import SelectableChip from '../../components/SelectableChip';
 import SelectDropdown from '../../components/SelectDropdown';
 import TextField from '../../components/TextField';
 import PatientPicker from '../../components/PatientPicker';
@@ -183,18 +182,12 @@ export default function AddAppointmentScreen({ navigation, route }: Props) {
           </View>
 
           <View style={styles.sectionCard}>
-            <SectionLabel>{t('appointments.selectStatus')}</SectionLabel>
-            <View style={styles.chipRow}>
-              {STATUSES.map((item) => (
-                <SelectableChip
-                  key={item}
-                  label={t(`appointments.statuses.${item}`)}
-                  selected={item === status}
-                  onPress={() => setStatus(item)}
-                  color={Colors.accent}
-                />
-              ))}
-            </View>
+            <SelectDropdown
+              label={t('appointments.selectStatus')}
+              options={STATUSES.map((item) => ({ value: item, label: t(`appointments.statuses.${item}`) }))}
+              selectedValue={status}
+              onSelect={(value) => setStatus(value as AppointmentStatus)}
+            />
           </View>
 
           <View style={styles.sectionCard}>
@@ -263,10 +256,5 @@ const styles = StyleSheet.create({
   helperText: {
     color: Colors.textMuted,
     fontSize: FontSize.sm,
-  },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
   },
 });
