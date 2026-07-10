@@ -51,7 +51,7 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(false);
   const locale = i18n.language === 'ar' ? arDZ : fr;
-  const { can } = usePermissions();
+  const { can, isAdmin } = usePermissions();
   const canViewDocs = can('sessions:view'); // admin + kiné only
   const canAnalyze = can('ai:analyze'); // admin + kiné only
   const canViewBilling = can('billing:view'); // admin + receptionist only
@@ -338,7 +338,7 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
               </View>
             ) : null}
 
-            {canViewDocs ? (
+            {isAdmin ? (
               <Button
                 title={t('clients.generateCertificate')}
                 onPress={handleOpenCertificate}
