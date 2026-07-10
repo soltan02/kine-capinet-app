@@ -1,7 +1,8 @@
 import React from 'react';
-import { TouchableOpacity, Text, ActivityIndicator, StyleSheet, ViewStyle, StyleProp } from 'react-native';
+import { TouchableOpacity, Text, ActivityIndicator, StyleSheet, ViewStyle, StyleProp, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius, Shadow } from '../constants/theme';
+import { useHover } from '../hooks/useHover';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
 
@@ -20,13 +21,22 @@ interface ButtonProps {
 export default function Button({ title, onPress, variant = 'primary', icon, loading, disabled, style }: ButtonProps) {
   const isDisabled = disabled || loading;
   const textColor = variant === 'primary' ? Colors.white : variant === 'danger' ? Colors.danger : variant === 'ghost' ? Colors.primary : Colors.textPrimary;
+  const { hovered, hoverProps } = useHover();
 
   return (
     <TouchableOpacity
-      style={[styles.base, variantStyles[variant], isDisabled && styles.disabled, style]}
+      style={[
+        styles.base,
+        variantStyles[variant],
+        isDisabled && styles.disabled,
+        !isDisabled && hovered && styles.hovered,
+        Platform.OS === 'web' && ({ cursor: isDisabled ? 'default' : 'pointer' } as any),
+        style,
+      ]}
       onPress={onPress}
       disabled={isDisabled}
       activeOpacity={0.8}
+      {...hoverProps}
     >
       {loading ? (
         <ActivityIndicator color={textColor} size="small" />
@@ -58,6 +68,9 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.55,
+  },
+  hovered: {
+    opacity: 0.88,
   },
 });
 

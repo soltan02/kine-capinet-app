@@ -25,6 +25,9 @@ import EmptyState from '../../components/EmptyState';
 import { SkeletonList } from '../../components/Skeleton';
 import { usePermissions } from '../../lib/permissions';
 import { isChecklistDismissed, dismissChecklist } from '../../lib/onboarding';
+import ResponsiveContainer from '../../components/ResponsiveContainer';
+import NotificationBell from '../../components/NotificationBell';
+import { useResponsive } from '../../hooks/useResponsive';
 
 function getGreeting(t: any) {
   const hour = new Date().getHours();
@@ -97,6 +100,7 @@ export default function DashboardScreen({ navigation }: { navigation: any }) {
   const { clients, fetchClients } = useClientsStore();
   const { appointments, fetchAppointments } = useAppointmentsStore();
   const { can } = usePermissions();
+  const { isDesktop } = useResponsive();
   const [refreshing, setRefreshing] = React.useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [auditCount, setAuditCount] = useState(0);
@@ -194,6 +198,7 @@ export default function DashboardScreen({ navigation }: { navigation: any }) {
   return (
     <SafeAreaView style={CommonStyles.safeArea} edges={['top']}>
       <StatusBar barStyle={Colors.statusBarStyle} backgroundColor={Colors.background} />
+      <ResponsiveContainer>
       <ScrollView
         style={styles.scroll}
         showsVerticalScrollIndicator={false}
@@ -205,12 +210,15 @@ export default function DashboardScreen({ navigation }: { navigation: any }) {
             <Text style={styles.greeting}>{getGreeting(t)},</Text>
             <Text style={styles.userName}>{profile?.full_name?.split(' ')[0] || t('dashboard.doctorFallback')} 👋</Text>
           </View>
-          <TouchableOpacity
-            style={styles.notifBtn}
-            onPress={() => navigation.navigate('Settings')}
-          >
-            <Ionicons name="settings-outline" size={22} color={Colors.primary} />
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <NotificationBell />
+            <TouchableOpacity
+              style={styles.notifBtn}
+              onPress={() => navigation.navigate('Settings')}
+            >
+              <Ionicons name="settings-outline" size={22} color={Colors.primary} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Date pill */}
@@ -221,116 +229,159 @@ export default function DashboardScreen({ navigation }: { navigation: any }) {
           </Text>
         </View>
 
-        {/* Getting started checklist (admin only, until complete) */}
-        {showChecklist && (
-          <View style={styles.checklistCard}>
-            <View style={CommonStyles.rowBetween}>
-              <Text style={styles.checklistTitle}>{t('dashboard.checklist.title')}</Text>
-              <TouchableOpacity onPress={handleDismissChecklist} hitSlop={8}>
-                <Ionicons name="close" size={18} color={Colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-            {checklistItems.map((item, i) => (
-              <TouchableOpacity key={i} style={styles.checklistRow} onPress={item.onPress} activeOpacity={0.7}>
-                <Ionicons
-                  name={item.done ? 'checkmark-circle' : 'ellipse-outline'}
-                  size={20}
-                  color={item.done ? Colors.success : Colors.textMuted}
-                />
-                <Text style={[styles.checklistLabel, item.done && styles.checklistLabelDone]}>{item.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-
-        {/* Stats */}
-        <Animated.View style={{ opacity: fadeAnim }}>
-          <Text style={[CommonStyles.sectionTitle, styles.sectionMargin]}>
-            {t('dashboard.quickStats')}
-          </Text>
-          <HeroStat icon="calendar" label={t('dashboard.todayAppointments')} value={todayAppointments.length} />
-          <View style={styles.statsGrid}>
-            <StatTile icon="people" label={t('dashboard.totalClients')} value={clients.length} color={Colors.primary} />
-            <StatTile icon="checkmark-circle" label={t('dashboard.thisWeek')} value={`${thisWeekSessions} ${t('dashboard.sessions')}`} color={Colors.success} />
-            {can('billing:viewTotals') && (
-              <StatTile icon="cash" label={t('dashboard.monthRevenue')} value={`${monthRevenue.toFixed(0)} TND`} color={Colors.secondary} />
-            )}
-            <StatTile icon="stats-chart" label={t('dashboard.thisMonth')} value={`${thisMonthSessions} ${t('dashboard.sessions')}`} color={Colors.info} />
-          </View>
-        </Animated.View>
-
-        {/* Quick Actions */}
-        <Text style={[CommonStyles.sectionTitle, styles.sectionMargin]}>{t('dashboard.quickAdd')}</Text>
-        <View style={styles.quickActions}>
-          <TouchableOpacity
-            style={styles.quickAction}
-            onPress={() => navigation.navigate('AddClient')}
-            activeOpacity={0.85}
-          >
-            <View style={[styles.quickIcon, { backgroundColor: Colors.primaryLight }]}>
-              <Ionicons name="person-add-outline" size={24} color={Colors.primary} />
-            </View>
-            <Text style={styles.quickActionLabel}>{t('dashboard.newClient')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.quickAction}
-            onPress={() => navigation.navigate('Calendar')}
-            activeOpacity={0.85}
-          >
-            <View style={[styles.quickIcon, { backgroundColor: Colors.accentLight }]}>
-              <Ionicons name="calendar-outline" size={24} color={Colors.accent} />
-            </View>
-            <Text style={styles.quickActionLabel}>{t('dashboard.newAppointment')}</Text>
-          </TouchableOpacity>
-        </View>
-
-        {profile?.role === 'admin' ? (
-          <View style={styles.operationsCard}>
-            <Text style={styles.operationsTitle}>{t('dashboard.clinicalOverview')}</Text>
-            <View style={styles.operationsGrid}>
-              <View style={styles.operationPill}>
-                <Ionicons name="people-outline" size={18} color={Colors.primary} />
-                <Text style={styles.operationText}>{t('dashboard.activePatients', { count: activeTreatmentCount })}</Text>
+        {(() => {
+          const checklistSection = showChecklist ? (
+            <View style={styles.checklistCard}>
+              <View style={CommonStyles.rowBetween}>
+                <Text style={styles.checklistTitle}>{t('dashboard.checklist.title')}</Text>
+                <TouchableOpacity onPress={handleDismissChecklist} hitSlop={8}>
+                  <Ionicons name="close" size={18} color={Colors.textMuted} />
+                </TouchableOpacity>
               </View>
-              <View style={styles.operationPill}>
-                <Ionicons name="alert-circle-outline" size={18} color={Colors.warning} />
-                <Text style={styles.operationText}>{t('dashboard.cancellationRate', { rate: cancellationRate })}</Text>
+              {checklistItems.map((item, i) => (
+                <TouchableOpacity key={i} style={styles.checklistRow} onPress={item.onPress} activeOpacity={0.7}>
+                  <Ionicons
+                    name={item.done ? 'checkmark-circle' : 'ellipse-outline'}
+                    size={20}
+                    color={item.done ? Colors.success : Colors.textMuted}
+                  />
+                  <Text style={[styles.checklistLabel, item.done && styles.checklistLabelDone]}>{item.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : null;
+
+          const statsSection = (
+            <Animated.View style={{ opacity: fadeAnim }}>
+              <Text style={[CommonStyles.sectionTitle, styles.sectionMargin]}>
+                {t('dashboard.quickStats')}
+              </Text>
+              <HeroStat icon="calendar" label={t('dashboard.todayAppointments')} value={todayAppointments.length} />
+              <View style={styles.statsGrid}>
+                <StatTile icon="people" label={t('dashboard.totalClients')} value={clients.length} color={Colors.primary} />
+                <StatTile icon="checkmark-circle" label={t('dashboard.thisWeek')} value={`${thisWeekSessions} ${t('dashboard.sessions')}`} color={Colors.success} />
+                {can('billing:viewTotals') && (
+                  <StatTile icon="cash" label={t('dashboard.monthRevenue')} value={`${monthRevenue.toFixed(0)} TND`} color={Colors.secondary} />
+                )}
+                <StatTile icon="stats-chart" label={t('dashboard.thisMonth')} value={`${thisMonthSessions} ${t('dashboard.sessions')}`} color={Colors.info} />
               </View>
-              <View style={styles.operationPill}>
-                <Ionicons name="shield-outline" size={18} color={Colors.info} />
-                <Text style={styles.operationText}>{t('dashboard.actionsToday', { count: auditCount })}</Text>
+            </Animated.View>
+          );
+
+          const quickActionsSection = (
+            <>
+              <Text style={[CommonStyles.sectionTitle, styles.sectionMargin]}>{t('dashboard.quickAdd')}</Text>
+              <View style={styles.quickActions}>
+                <TouchableOpacity
+                  style={styles.quickAction}
+                  onPress={() => navigation.navigate('AddClient')}
+                  activeOpacity={0.85}
+                >
+                  <View style={[styles.quickIcon, { backgroundColor: Colors.primaryLight }]}>
+                    <Ionicons name="person-add-outline" size={24} color={Colors.primary} />
+                  </View>
+                  <Text style={styles.quickActionLabel}>{t('dashboard.newClient')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.quickAction}
+                  onPress={() => navigation.navigate('Calendar')}
+                  activeOpacity={0.85}
+                >
+                  <View style={[styles.quickIcon, { backgroundColor: Colors.accentLight }]}>
+                    <Ionicons name="calendar-outline" size={24} color={Colors.accent} />
+                  </View>
+                  <Text style={styles.quickActionLabel}>{t('dashboard.newAppointment')}</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          );
+
+          const operationsSection = profile?.role === 'admin' ? (
+            <View style={styles.operationsCard}>
+              <Text style={styles.operationsTitle}>{t('dashboard.clinicalOverview')}</Text>
+              <View style={styles.operationsGrid}>
+                <View style={styles.operationPill}>
+                  <Ionicons name="people-outline" size={18} color={Colors.primary} />
+                  <Text style={styles.operationText}>{t('dashboard.activePatients', { count: activeTreatmentCount })}</Text>
+                </View>
+                <View style={styles.operationPill}>
+                  <Ionicons name="alert-circle-outline" size={18} color={Colors.warning} />
+                  <Text style={styles.operationText}>{t('dashboard.cancellationRate', { rate: cancellationRate })}</Text>
+                </View>
+                <View style={styles.operationPill}>
+                  <Ionicons name="shield-outline" size={18} color={Colors.info} />
+                  <Text style={styles.operationText}>{t('dashboard.actionsToday', { count: auditCount })}</Text>
+                </View>
               </View>
             </View>
-          </View>
-        ) : null}
+          ) : null;
 
-        {/* Today's Appointments */}
-        <Text style={[CommonStyles.sectionTitle, styles.sectionMargin]}>
-          {t('dashboard.todayAppointments')}
-        </Text>
+          const scheduleSection = (
+            <>
+              <Text style={[CommonStyles.sectionTitle, styles.sectionMargin]}>
+                {t('dashboard.todayAppointments')}
+              </Text>
+              {initialLoading ? (
+                <SkeletonList count={3} padded={false} />
+              ) : todayAppointments.length === 0 ? (
+                <EmptyState icon="calendar-outline" message={t('dashboard.noAppointmentsToday')} iconSize={40} variant="card" />
+              ) : (
+                todayAppointments.map((appt) => (
+                  <AppointmentCard
+                    key={appt.id}
+                    appointment={appt}
+                    onPress={() => navigation.navigate('AppointmentDetail', { appointment: appt })}
+                  />
+                ))
+              )}
+            </>
+          );
 
-        {initialLoading ? (
-          <SkeletonList count={3} padded={false} />
-        ) : todayAppointments.length === 0 ? (
-          <EmptyState icon="calendar-outline" message={t('dashboard.noAppointmentsToday')} iconSize={40} variant="card" />
-        ) : (
-          todayAppointments.map((appt) => (
-            <AppointmentCard
-              key={appt.id}
-              appointment={appt}
-              onPress={() => navigation.navigate('AppointmentDetail', { appointment: appt })}
-            />
-          ))
-        )}
+          if (!isDesktop) {
+            return (
+              <>
+                {checklistSection}
+                {statsSection}
+                {quickActionsSection}
+                {operationsSection}
+                {scheduleSection}
+              </>
+            );
+          }
+
+          // Desktop: stats/quick actions/operations form the main column,
+          // today's schedule becomes a persistent side column instead of
+          // just another stacked section — reads as a dashboard, not a
+          // scrolled phone screen.
+          return (
+            <View style={styles.desktopGrid}>
+              <View style={styles.desktopMain}>
+                {checklistSection}
+                {statsSection}
+                {quickActionsSection}
+                {operationsSection}
+              </View>
+              <View style={styles.desktopSide}>{scheduleSection}</View>
+            </View>
+          );
+        })()}
 
         <View style={{ height: TAB_BAR_CLEARANCE }} />
       </ScrollView>
+      </ResponsiveContainer>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   scroll: { flex: 1, paddingHorizontal: Spacing.md },
+  desktopGrid: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.lg,
+  },
+  desktopMain: { flex: 2, minWidth: 0 },
+  desktopSide: { flex: 1, minWidth: 320 },
   checklistCard: {
     backgroundColor: Colors.card,
     borderRadius: BorderRadius.lg,
@@ -376,6 +427,10 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: Colors.textPrimary,
     letterSpacing: -0.5,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
   },
   notifBtn: {
     width: 44,

@@ -25,6 +25,8 @@ import ScreenHeader from '../../components/ScreenHeader';
 import EmptyState from '../../components/EmptyState';
 import { SkeletonList } from '../../components/Skeleton';
 import SelectableChip from '../../components/SelectableChip';
+import ResponsiveContainer from '../../components/ResponsiveContainer';
+import { useResponsive } from '../../hooks/useResponsive';
 
 const METHOD_ICONS: Record<PaymentMethod, string> = {
   cash: 'cash-outline',
@@ -58,6 +60,7 @@ export default function BillingScreen({ navigation }: { navigation: any }) {
   const { can } = usePermissions();
   const canManage = can('billing:manage');
   const canViewTotals = can('billing:viewTotals');
+  const { isDesktop } = useResponsive();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -137,18 +140,30 @@ export default function BillingScreen({ navigation }: { navigation: any }) {
         </View>
       ) : null}
 
+      <ResponsiveContainer>
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
       >
-        {/* Summary Cards — revenue totals are admin-only */}
+        {/* Summary Cards — revenue totals are admin-only. Desktop gets a
+            static wrapping grid (every card visible at once, like a real
+            dashboard); mobile keeps the horizontal swipe strip. */}
         {canViewTotals && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.summaryScroll}>
-            <SummaryCard label={t('billing.totalRevenue')} amount={totalRevenue} icon="stats-chart" color={Colors.primary} />
-            <SummaryCard label={t('billing.monthlyRevenue')} amount={monthRevenue} icon="calendar" color={Colors.success} />
-            <SummaryCard label={t('billing.methods.cash')} amount={cashTotal} icon="cash-outline" color={Colors.cash} />
-            <SummaryCard label={t('billing.methods.cnam')} amount={cnamTotal} icon="shield-checkmark-outline" color={Colors.cnam} />
-          </ScrollView>
+          isDesktop ? (
+            <View style={styles.summaryGrid}>
+              <SummaryCard label={t('billing.totalRevenue')} amount={totalRevenue} icon="stats-chart" color={Colors.primary} />
+              <SummaryCard label={t('billing.monthlyRevenue')} amount={monthRevenue} icon="calendar" color={Colors.success} />
+              <SummaryCard label={t('billing.methods.cash')} amount={cashTotal} icon="cash-outline" color={Colors.cash} />
+              <SummaryCard label={t('billing.methods.cnam')} amount={cnamTotal} icon="shield-checkmark-outline" color={Colors.cnam} />
+            </View>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.summaryScroll}>
+              <SummaryCard label={t('billing.totalRevenue')} amount={totalRevenue} icon="stats-chart" color={Colors.primary} />
+              <SummaryCard label={t('billing.monthlyRevenue')} amount={monthRevenue} icon="calendar" color={Colors.success} />
+              <SummaryCard label={t('billing.methods.cash')} amount={cashTotal} icon="cash-outline" color={Colors.cash} />
+              <SummaryCard label={t('billing.methods.cnam')} amount={cnamTotal} icon="shield-checkmark-outline" color={Colors.cnam} />
+            </ScrollView>
+          )
         )}
 
         {/* Method filter */}
@@ -188,6 +203,7 @@ export default function BillingScreen({ navigation }: { navigation: any }) {
         </View>
         <View style={{ height: TAB_BAR_CLEARANCE }} />
       </ScrollView>
+      </ResponsiveContainer>
     </SafeAreaView>
   );
 }
@@ -276,6 +292,13 @@ const styles = StyleSheet.create({
   summaryScroll: {
     paddingHorizontal: Spacing.md,
     marginBottom: Spacing.lg,
+  },
+  summaryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.lg,
+    gap: Spacing.md,
   },
   summaryCard: {
     backgroundColor: Colors.card,

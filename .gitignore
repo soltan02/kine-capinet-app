@@ -54,3 +54,6 @@ write_p1.py
 write_p2.py
 write_usermgmt.py
 BUGFIX_PROMPT.md
+
+.vercel
+.env*

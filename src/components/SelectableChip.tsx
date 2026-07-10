@@ -1,7 +1,8 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '../constants/theme';
+import { useHover } from '../hooks/useHover';
 
 interface SelectableChipProps {
   label: string;
@@ -15,11 +16,18 @@ interface SelectableChipProps {
 // AddPaymentScreen, AddAppointmentScreen, AddUserScreen, UserManagementScreen.
 export default function SelectableChip({ label, selected, onPress, icon, color }: SelectableChipProps) {
   const activeColor = color || Colors.primary;
+  const { hovered, hoverProps } = useHover();
   return (
     <TouchableOpacity
-      style={[styles.chip, selected && { borderColor: activeColor, backgroundColor: activeColor + '18' }]}
+      style={[
+        styles.chip,
+        selected && { borderColor: activeColor, backgroundColor: activeColor + '18' },
+        !selected && hovered && styles.hovered,
+        Platform.OS === 'web' && ({ cursor: 'pointer' } as any),
+      ]}
       onPress={onPress}
       activeOpacity={0.75}
+      {...hoverProps}
     >
       {icon ? <Ionicons name={icon} size={14} color={selected ? activeColor : Colors.textMuted} /> : null}
       <Text style={[styles.text, selected && { color: activeColor }]}>{label}</Text>
@@ -43,5 +51,8 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
     color: Colors.textMuted,
+  },
+  hovered: {
+    backgroundColor: Colors.border,
   },
 });

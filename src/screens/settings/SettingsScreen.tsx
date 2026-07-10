@@ -20,11 +20,14 @@ import i18n from '../../lib/i18n';
 import ScreenHeader from '../../components/ScreenHeader';
 import SectionLabel from '../../components/SectionLabel';
 import Button from '../../components/Button';
+import ResponsiveContainer from '../../components/ResponsiveContainer';
+import { useResponsive } from '../../hooks/useResponsive';
 
 export default function SettingsScreen({ navigation }: { navigation: any }) {
   const { t } = useTranslation();
   const { profile, signOut } = useAuthStore();
   const { can, role } = usePermissions();
+  const { isDesktop } = useResponsive();
   const [loggingOut, setLoggingOut] = useState(false);
   const [switchingLang, setSwitchingLang] = useState(false);
   const [themeMode, setThemeModeState] = useState<ThemeMode>(getThemeMode());
@@ -108,147 +111,198 @@ export default function SettingsScreen({ navigation }: { navigation: any }) {
     <SafeAreaView style={CommonStyles.safeArea} edges={['top']}>
       <ScreenHeader title={t('settings.title')} onBack={() => navigation.navigate('Dashboard')} />
 
+      <ResponsiveContainer>
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Profile card */}
-        <View style={styles.profileCard}>
-          <View style={styles.profileAvatar}>
-            <Text style={styles.profileAvatarText}>
-              {(profile?.full_name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-            </Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.profileName}>{profile?.full_name || '—'}</Text>
-            <View style={[styles.rolePill, role === 'admin' && styles.rolePillAdmin]}>
-              <Text style={[styles.rolePillText, role === 'admin' && styles.rolePillTextAdmin]}>
-                {role === 'admin' && '👑 '}
-                {role === 'therapist' && '🩺 '}
-                {role === 'receptionist' && '💼 '}
-                {t(`settings.roles.${role}` as any)}
-              </Text>
+        {(() => {
+          const profileSection = (
+            <View style={styles.profileCard}>
+              <View style={styles.profileAvatar}>
+                <Text style={styles.profileAvatarText}>
+                  {(profile?.full_name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                </Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.profileName}>{profile?.full_name || '—'}</Text>
+                <View style={[styles.rolePill, role === 'admin' && styles.rolePillAdmin]}>
+                  <Text style={[styles.rolePillText, role === 'admin' && styles.rolePillTextAdmin]}>
+                    {role === 'admin' && '👑 '}
+                    {role === 'therapist' && '🩺 '}
+                    {role === 'receptionist' && '💼 '}
+                    {t(`settings.roles.${role}` as any)}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.editProfileBtn}
+                onPress={() => navigation.navigate('EditUser', { user: profile })}
+              >
+                <Ionicons name="pencil-outline" size={16} color={Colors.primary} />
+              </TouchableOpacity>
             </View>
-          </View>
-          <TouchableOpacity
-            style={styles.editProfileBtn}
-            onPress={() => navigation.navigate('EditUser', { user: profile })}
-          >
-            <Ionicons name="pencil-outline" size={16} color={Colors.primary} />
-          </TouchableOpacity>
-        </View>
+          );
 
-        {/* Language */}
-        <SectionLabel>{t('settings.language')}</SectionLabel>
-        <View style={styles.card}>
-          <View style={styles.langRow}>
-            <TouchableOpacity
-              style={[styles.langBtn, currentLang === 'fr' && styles.langBtnActive]}
-              onPress={() => handleLanguageSwitch('fr')}
-              disabled={switchingLang}
-            >
-              <Text style={styles.langFlag}>🇫🇷</Text>
-              <Text style={[styles.langLabel, currentLang === 'fr' && styles.langLabelActive]}>
-                {t('settings.french')}
-              </Text>
-              {currentLang === 'fr' && <Ionicons name="checkmark-circle" size={18} color={Colors.primary} />}
-            </TouchableOpacity>
-            <View style={styles.langDivider} />
-            <TouchableOpacity
-              style={[styles.langBtn, currentLang === 'ar' && styles.langBtnActive]}
-              onPress={() => handleLanguageSwitch('ar')}
-              disabled={switchingLang}
-            >
-              <Text style={styles.langFlag}>🇹🇳</Text>
-              <Text style={[styles.langLabel, currentLang === 'ar' && styles.langLabelActive]}>
-                {t('settings.arabic')}
-              </Text>
-              {currentLang === 'ar' && <Ionicons name="checkmark-circle" size={18} color={Colors.primary} />}
-            </TouchableOpacity>
-          </View>
-        </View>
+          const languageSection = (
+            <>
+              <SectionLabel>{t('settings.language')}</SectionLabel>
+              <View style={styles.card}>
+                <View style={styles.langRow}>
+                  <TouchableOpacity
+                    style={[styles.langBtn, currentLang === 'fr' && styles.langBtnActive]}
+                    onPress={() => handleLanguageSwitch('fr')}
+                    disabled={switchingLang}
+                  >
+                    <Text style={styles.langFlag}>🇫🇷</Text>
+                    <Text style={[styles.langLabel, currentLang === 'fr' && styles.langLabelActive]}>
+                      {t('settings.french')}
+                    </Text>
+                    {currentLang === 'fr' && <Ionicons name="checkmark-circle" size={18} color={Colors.primary} />}
+                  </TouchableOpacity>
+                  <View style={styles.langDivider} />
+                  <TouchableOpacity
+                    style={[styles.langBtn, currentLang === 'ar' && styles.langBtnActive]}
+                    onPress={() => handleLanguageSwitch('ar')}
+                    disabled={switchingLang}
+                  >
+                    <Text style={styles.langFlag}>🇹🇳</Text>
+                    <Text style={[styles.langLabel, currentLang === 'ar' && styles.langLabelActive]}>
+                      {t('settings.arabic')}
+                    </Text>
+                    {currentLang === 'ar' && <Ionicons name="checkmark-circle" size={18} color={Colors.primary} />}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </>
+          );
 
-        {/* Appearance */}
-        <SectionLabel>{t('settings.appearance')}</SectionLabel>
-        <View style={styles.card}>
-          <View style={styles.langRow}>
-            <TouchableOpacity
-              style={[styles.langBtn, themeMode === 'light' && styles.langBtnActive]}
-              onPress={() => handleThemeSwitch('light')}
-            >
-              <Ionicons name="sunny-outline" size={20} color={themeMode === 'light' ? Colors.primary : Colors.textMuted} />
-              <Text style={[styles.langLabel, themeMode === 'light' && styles.langLabelActive]}>
-                {t('settings.light')}
-              </Text>
-              {themeMode === 'light' && <Ionicons name="checkmark-circle" size={18} color={Colors.primary} />}
-            </TouchableOpacity>
-            <View style={styles.langDivider} />
-            <TouchableOpacity
-              style={[styles.langBtn, themeMode === 'dark' && styles.langBtnActive]}
-              onPress={() => handleThemeSwitch('dark')}
-            >
-              <Ionicons name="moon-outline" size={20} color={themeMode === 'dark' ? Colors.primary : Colors.textMuted} />
-              <Text style={[styles.langLabel, themeMode === 'dark' && styles.langLabelActive]}>
-                {t('settings.dark')}
-              </Text>
-              {themeMode === 'dark' && <Ionicons name="checkmark-circle" size={18} color={Colors.primary} />}
-            </TouchableOpacity>
-          </View>
-        </View>
+          const appearanceSection = (
+            <>
+              <SectionLabel>{t('settings.appearance')}</SectionLabel>
+              <View style={styles.card}>
+                <View style={styles.langRow}>
+                  <TouchableOpacity
+                    style={[styles.langBtn, themeMode === 'light' && styles.langBtnActive]}
+                    onPress={() => handleThemeSwitch('light')}
+                  >
+                    <Ionicons name="sunny-outline" size={20} color={themeMode === 'light' ? Colors.primary : Colors.textMuted} />
+                    <Text style={[styles.langLabel, themeMode === 'light' && styles.langLabelActive]}>
+                      {t('settings.light')}
+                    </Text>
+                    {themeMode === 'light' && <Ionicons name="checkmark-circle" size={18} color={Colors.primary} />}
+                  </TouchableOpacity>
+                  <View style={styles.langDivider} />
+                  <TouchableOpacity
+                    style={[styles.langBtn, themeMode === 'dark' && styles.langBtnActive]}
+                    onPress={() => handleThemeSwitch('dark')}
+                  >
+                    <Ionicons name="moon-outline" size={20} color={themeMode === 'dark' ? Colors.primary : Colors.textMuted} />
+                    <Text style={[styles.langLabel, themeMode === 'dark' && styles.langLabelActive]}>
+                      {t('settings.dark')}
+                    </Text>
+                    {themeMode === 'dark' && <Ionicons name="checkmark-circle" size={18} color={Colors.primary} />}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </>
+          );
 
-        {/* Account */}
-        {can('users:manage') && (
-          <>
-            <SectionLabel>{t('settings.users')}</SectionLabel>
-            <View style={styles.card}>
-              <SettingRow
-                icon="people-outline"
-                label={t('settings.users')}
-                onPress={() => navigation.navigate('UserManagement')}
-              />
-              {can('audit:view') && (
+          const accountSection = can('users:manage') ? (
+            <>
+              <SectionLabel>{t('settings.users')}</SectionLabel>
+              <View style={styles.card}>
                 <SettingRow
-                  icon="shield-outline"
-                  label={t('settings.auditLogs')}
-                  onPress={() => navigation.navigate('AuditLogScreen')}
+                  icon="people-outline"
+                  label={t('settings.users')}
+                  onPress={() => navigation.navigate('UserManagement')}
                 />
-              )}
-              {can('backups:manage') && (
+                {can('audit:view') && (
+                  <SettingRow
+                    icon="shield-outline"
+                    label={t('settings.auditLogs')}
+                    onPress={() => navigation.navigate('AuditLogScreen')}
+                  />
+                )}
+                {can('backups:manage') && (
+                  <SettingRow
+                    icon="cloud-download-outline"
+                    label={t('backups.title')}
+                    onPress={() => navigation.navigate('Backups')}
+                  />
+                )}
+              </View>
+            </>
+          ) : null;
+
+          const aboutSection = (
+            <>
+              <SectionLabel>{t('settings.about')}</SectionLabel>
+              <View style={styles.card}>
                 <SettingRow
-                  icon="cloud-download-outline"
-                  label={t('backups.title')}
-                  onPress={() => navigation.navigate('Backups')}
+                  icon="information-circle-outline"
+                  label={t('settings.version')}
+                  value="1.0.0"
                 />
-              )}
+              </View>
+            </>
+          );
+
+          const logoutSection = (
+            <Button
+              title={t('settings.logout')}
+              onPress={handleLogout}
+              loading={loggingOut}
+              variant="danger"
+              icon="log-out-outline"
+              style={{ marginTop: Spacing.lg }}
+            />
+          );
+
+          if (!isDesktop) {
+            return (
+              <>
+                {profileSection}
+                {languageSection}
+                {appearanceSection}
+                {accountSection}
+                {aboutSection}
+                {logoutSection}
+              </>
+            );
+          }
+
+          // Desktop: preferences (profile/language/appearance) form the
+          // left column, account/admin settings form the right column —
+          // reads as a settings page with sections, not one long list.
+          return (
+            <View style={styles.desktopGrid}>
+              <View style={styles.desktopCol}>
+                {profileSection}
+                {languageSection}
+                {appearanceSection}
+              </View>
+              <View style={styles.desktopCol}>
+                {accountSection}
+                {aboutSection}
+                {logoutSection}
+              </View>
             </View>
-          </>
-        )}
-
-        {/* About */}
-        <SectionLabel>{t('settings.about')}</SectionLabel>
-        <View style={styles.card}>
-          <SettingRow
-            icon="information-circle-outline"
-            label={t('settings.version')}
-            value="1.0.0"
-          />
-        </View>
-
-        {/* Logout */}
-        <Button
-          title={t('settings.logout')}
-          onPress={handleLogout}
-          loading={loggingOut}
-          variant="danger"
-          icon="log-out-outline"
-          style={{ marginTop: Spacing.lg }}
-        />
+          );
+        })()}
 
         <View style={{ height: TAB_BAR_CLEARANCE }} />
       </ScrollView>
+      </ResponsiveContainer>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   scroll: { paddingHorizontal: Spacing.md },
+  desktopGrid: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.lg,
+  },
+  desktopCol: { flex: 1, minWidth: 0 },
   profileCard: {
     flexDirection: 'row',
     alignItems: 'center',

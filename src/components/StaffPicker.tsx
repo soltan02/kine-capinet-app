@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius, Shadow } from '../constants/theme';
 import { Profile } from '../lib/supabase';
+import { useResponsive } from '../hooks/useResponsive';
 
 interface StaffPickerProps {
   label: string;
@@ -18,6 +19,7 @@ interface StaffPickerProps {
 // search modal, adapted for staff profiles and an explicit "unassign" row.
 export default function StaffPicker({ label, staff, selectedStaffId, onSelect, placeholder }: StaffPickerProps) {
   const { t } = useTranslation();
+  const { isDesktop } = useResponsive();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
 
@@ -50,8 +52,8 @@ export default function StaffPicker({ label, staff, selectedStaffId, onSelect, p
       </TouchableOpacity>
 
       <Modal visible={open} animationType="slide" transparent onRequestClose={() => setOpen(false)}>
-        <View style={styles.overlay}>
-          <SafeAreaView style={styles.sheet}>
+        <View style={[styles.overlay, isDesktop && styles.overlayDesktop]}>
+          <SafeAreaView style={[styles.sheet, isDesktop && styles.sheetDesktop]}>
             <View style={styles.sheetHeader}>
               <Text style={styles.sheetTitle}>{t('appointments.assignedTo')}</Text>
               <TouchableOpacity onPress={() => setOpen(false)} hitSlop={8}>
@@ -136,6 +138,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'flex-end',
+  },
+  overlayDesktop: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sheetDesktop: {
+    width: '100%',
+    maxWidth: 480,
+    maxHeight: 560,
+    borderRadius: BorderRadius.xxl,
   },
   sheet: {
     backgroundColor: Colors.card,

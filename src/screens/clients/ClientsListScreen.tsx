@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   StatusBar,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -19,13 +20,25 @@ import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, TAB_BAR_
 import ScreenHeader from '../../components/ScreenHeader';
 import EmptyState from '../../components/EmptyState';
 import { SkeletonList } from '../../components/Skeleton';
+import { useHover } from '../../hooks/useHover';
 
-function ClientListItem({ client, onPress }: { client: Client; onPress: () => void }) {
+function ClientListItem({ client, onPress, selected }: { client: Client; onPress: () => void; selected?: boolean }) {
   const initials = `${client.first_name[0]}${client.last_name[0]}`.toUpperCase();
   const avatarColor = getAvatarColor(client.id);
+  const { hovered, hoverProps } = useHover();
 
   return (
-    <TouchableOpacity style={styles.clientCard} onPress={onPress} activeOpacity={0.85}>
+    <TouchableOpacity
+      style={[
+        styles.clientCard,
+        selected && styles.clientCardSelected,
+        !selected && hovered && styles.clientCardHovered,
+        Platform.OS === 'web' && ({ cursor: 'pointer' } as any),
+      ]}
+      onPress={onPress}
+      activeOpacity={0.85}
+      {...hoverProps}
+    >
       <View style={[styles.avatar, { backgroundColor: avatarColor + '22' }]}>
         <Text style={[styles.avatarText, { color: avatarColor }]}>{initials}</Text>
       </View>
@@ -60,7 +73,17 @@ function getAvatarColor(id: string): string {
   return colors[hash % colors.length];
 }
 
-export default function ClientsListScreen({ navigation }: { navigation: any }) {
+interface ClientsListScreenProps {
+  navigation: any;
+  // Desktop split-view mode (ClientsSplitScreen): when provided, tapping a
+  // row calls this instead of navigation.navigate('ClientDetail', ...), and
+  // selectedClientId highlights the active row. Mobile passes neither —
+  // behavior there is completely unchanged.
+  onSelectClient?: (client: Client) => void;
+  selectedClientId?: string | null;
+}
+
+export default function ClientsListScreen({ navigation, onSelectClient, selectedClientId }: ClientsListScreenProps) {
   const { t } = useTranslation();
   const { clients, loading, error, fetchClients } = useClientsStore();
   const [search, setSearch] = useState('');
@@ -129,7 +152,8 @@ export default function ClientsListScreen({ navigation }: { navigation: any }) {
           renderItem={({ item }) => (
             <ClientListItem
               client={item}
-              onPress={() => navigation.navigate('ClientDetail', { client: item })}
+              selected={!!onSelectClient && item.id === selectedClientId}
+              onPress={() => (onSelectClient ? onSelectClient(item) : navigation.navigate('ClientDetail', { client: item }))}
             />
           )}
           contentContainerStyle={styles.listContent}
@@ -192,7 +216,16 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     padding: Spacing.sm,
     marginBottom: Spacing.sm,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
     ...Shadow.sm,
+  },
+  clientCardSelected: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primaryLight,
+  },
+  clientCardHovered: {
+    backgroundColor: Colors.inputBg,
   },
   avatar: {
     width: 44,

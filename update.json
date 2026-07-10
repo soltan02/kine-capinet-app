@@ -1,5 +1,5 @@
 {
-  "latestVersion": "1.6.9",
+  "latestVersion": "1.7.0",
   "apkUrl": "https://expo.dev/accounts/soltan0102/projects/kine-cabinet-app/builds",
-  "notes": "Facturation masquée pour les kinés, attribution des séances (kiné/admin), analyse IA lisant les documents joints, export dossier PDF amélioré, statut actif/inactif retiré."
+  "notes": "Version bureau optimisée (barre latérale, mise en page multi-colonnes), rappels de séances avec notification en temps réel, patients et rendez-vous côte à côte sur grand écran."
 }

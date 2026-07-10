@@ -1,16 +1,16 @@
 import React from 'react';
-import { View, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { Colors, Shadow, BorderRadius } from '../constants/theme';
 import { usePermissions } from '../lib/permissions';
+import { useResponsive } from '../hooks/useResponsive';
+import FloatingTabBar from '../components/FloatingTabBar';
+import SidebarNav from '../components/SidebarNav';
 
 // Screens
 import DashboardScreen from '../screens/dashboard/DashboardScreen';
 import ClientsListScreen from '../screens/clients/ClientsListScreen';
+import ClientsSplitScreen from '../screens/clients/ClientsSplitScreen';
 import ClientDetailScreen from '../screens/clients/ClientDetailScreen';
 import AddEditClientScreen from '../screens/clients/AddEditClientScreen';
 import CalendarScreen from '../screens/calendar/CalendarScreen';
@@ -44,10 +44,14 @@ const stackScreenOptions = {
 };
 
 // ─── Clients Stack ────────────────────────────────────────────
+// On desktop, the list route renders the side-by-side split view instead
+// of the plain list — everything else in the stack (edit/add forms,
+// session notes, etc.) is shared and unaffected by the breakpoint.
 function ClientsStack() {
+  const { isDesktop } = useResponsive();
   return (
     <Stack.Navigator screenOptions={stackScreenOptions}>
-      <Stack.Screen name="ClientsList" component={ClientsListScreen} />
+      <Stack.Screen name="ClientsList" component={isDesktop ? ClientsSplitScreen : ClientsListScreen} />
       <Stack.Screen name="ClientDetail" component={ClientDetailScreen} />
       <Stack.Screen name="AddClient" component={AddEditClientScreen} />
       <Stack.Screen name="AddSessionNote" component={AddSessionNoteScreen} />
@@ -109,12 +113,7 @@ function SettingsStack() {
 export default function MainNavigator() {
   const { t } = useTranslation();
   const { can } = usePermissions();
-  const insets = useSafeAreaInsets();
-  // Devices with a persistent 3-button nav bar report a larger bottom inset
-  // than gesture-nav devices — add it to the fixed offset so the floating
-  // tab bar clears the system bar on every phone, instead of a fixed value
-  // that only works when the inset is near zero.
-  const tabBarBottom = insets.bottom + (Platform.OS === 'ios' ? 16 : 10);
+  const { isDesktop } = useResponsive();
 
   const showBilling = can('billing:view');
   const showCalendar = can('appointments:manage');
@@ -125,46 +124,11 @@ export default function MainNavigator() {
   return (
     <Tab.Navigator
       initialRouteName={initialTab}
-      screenOptions={({ route }) => ({
+      tabBar={(props) => (isDesktop ? <SidebarNav {...props} /> : <FloatingTabBar {...props} />)}
+      screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: Colors.tabActive,
-        tabBarInactiveTintColor: Colors.tabInactive,
-        tabBarStyle: {
-          position: 'absolute',
-          left: 16,
-          right: 16,
-          bottom: tabBarBottom,
-          height: 64,
-          borderRadius: BorderRadius.full,
-          backgroundColor: Colors.tabBar,
-          borderTopWidth: 0,
-          borderWidth: 1,
-          borderColor: Colors.tabBarBorder,
-          paddingBottom: 0,
-          paddingTop: 0,
-          ...Shadow.lg,
-        },
-        tabBarItemStyle: {
-          paddingVertical: 8,
-        },
-        tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: '600',
-          letterSpacing: 0.2,
-          marginBottom: 2,
-        },
-        tabBarIcon: ({ focused, color, size }) => {
-          const icons: Record<string, [string, string]> = {
-            Dashboard: ['home', 'home-outline'],
-            Clients: ['people', 'people-outline'],
-            Calendar: ['calendar', 'calendar-outline'],
-            Billing: ['cash', 'cash-outline'],
-            Settings: ['settings', 'settings-outline'],
-          };
-          const [activeIcon, inactiveIcon] = icons[route.name] || ['help', 'help-outline'];
-          return <Ionicons name={(focused ? activeIcon : inactiveIcon) as any} size={size} color={color} />;
-        },
-      })}
+        tabBarPosition: isDesktop ? 'left' : 'bottom',
+      }}
     >
       {showDashboard && <Tab.Screen name="Dashboard" component={DashboardStack} options={{ title: t('tabs.dashboard') }} />}
       {showClients && <Tab.Screen name="Clients" component={ClientsStack} options={{ title: t('tabs.clients') }} />}

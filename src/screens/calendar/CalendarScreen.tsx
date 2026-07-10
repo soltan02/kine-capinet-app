@@ -7,6 +7,7 @@ import {
   ScrollView,
   StatusBar,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +23,9 @@ import ScreenHeader from '../../components/ScreenHeader';
 import StatusBadge, { getStatusColor } from '../../components/StatusBadge';
 import EmptyState from '../../components/EmptyState';
 import { SkeletonList } from '../../components/Skeleton';
+import ResponsiveContainer from '../../components/ResponsiveContainer';
+import { useHover } from '../../hooks/useHover';
+import { useResponsive } from '../../hooks/useResponsive';
 
 type ViewMode = 'day' | 'week' | 'month';
 const MODES: ViewMode[] = ['day', 'week', 'month'];
@@ -32,6 +36,7 @@ const fmtKey = (d: Date) => format(d, 'yyyy-MM-dd');
 export default function CalendarScreen({ navigation }: { navigation: any }) {
   const { t } = useTranslation();
   const { appointments, loading, error, fetchAppointments } = useAppointmentsStore();
+  const { isDesktop } = useResponsive();
   const [selectedDate, setSelectedDate] = useState(fmtKey(new Date()));
   const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [refreshing, setRefreshing] = useState(false);
@@ -148,98 +153,129 @@ export default function CalendarScreen({ navigation }: { navigation: any }) {
         </View>
       ) : null}
 
+      <ResponsiveContainer>
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
       >
-        {viewMode === 'month' && (
-          <View style={styles.calendarWrap}>
-            <Calendar
-              current={selectedDate}
-              key={selectedDate.slice(0, 7)}
-              onDayPress={(day: DateData) => setSelectedDate(day.dateString)}
-              markedDates={markedDates}
-              markingType="multi-dot"
-              theme={{
-                calendarBackground: Colors.card,
-                selectedDayBackgroundColor: Colors.primary,
-                selectedDayTextColor: Colors.white,
-                todayTextColor: Colors.primary,
-                dayTextColor: Colors.textPrimary,
-                textDisabledColor: Colors.textMuted,
-                monthTextColor: Colors.textPrimary,
-                arrowColor: Colors.primary,
-                dotColor: Colors.primary,
-                textMonthFontWeight: '700',
-                textDayFontSize: FontSize.sm,
-                textMonthFontSize: FontSize.lg,
-              }}
-            />
-          </View>
-        )}
+        {(() => {
+          const navSection = (
+            <>
+              {viewMode === 'month' && (
+                <View style={styles.calendarWrap}>
+                  <Calendar
+                    current={selectedDate}
+                    key={selectedDate.slice(0, 7)}
+                    onDayPress={(day: DateData) => setSelectedDate(day.dateString)}
+                    markedDates={markedDates}
+                    markingType="multi-dot"
+                    theme={{
+                      calendarBackground: Colors.card,
+                      selectedDayBackgroundColor: Colors.primary,
+                      selectedDayTextColor: Colors.white,
+                      todayTextColor: Colors.primary,
+                      dayTextColor: Colors.textPrimary,
+                      textDisabledColor: Colors.textMuted,
+                      monthTextColor: Colors.textPrimary,
+                      arrowColor: Colors.primary,
+                      dotColor: Colors.primary,
+                      textMonthFontWeight: '700',
+                      textDayFontSize: FontSize.sm,
+                      textMonthFontSize: FontSize.lg,
+                    }}
+                  />
+                </View>
+              )}
 
-        {viewMode === 'week' && (
-          <View style={styles.weekWrap}>
-            <View style={styles.navRow}>
-              <TouchableOpacity onPress={() => shiftDate(-1)} style={styles.navBtn}>
-                <Ionicons name="chevron-back" size={20} color={Colors.primary} />
-              </TouchableOpacity>
-              <Text style={styles.navLabel}>{format(weekStart, 'MMMM yyyy', { locale })}</Text>
-              <TouchableOpacity onPress={() => shiftDate(1)} style={styles.navBtn}>
-                <Ionicons name="chevron-forward" size={20} color={Colors.primary} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.weekStrip}>
-              {weekDays.map((d) => {
-                const key = fmtKey(d);
-                const isSelected = key === selectedDate;
-                const isToday = isSameDay(d, new Date());
-                const has = datesWithAppts.has(key);
-                return (
-                  <TouchableOpacity key={key} style={styles.weekCell} onPress={() => setSelectedDate(key)} activeOpacity={0.8}>
-                    <Text style={[styles.weekDow, isSelected && styles.weekDowSelected]}>
-                      {format(d, 'EEEEEE', { locale })}
-                    </Text>
-                    <View style={[styles.weekNum, isSelected && styles.weekNumSelected, !isSelected && isToday && styles.weekNumToday]}>
-                      <Text style={[styles.weekNumText, isSelected && styles.weekNumTextSelected, !isSelected && isToday && styles.weekNumTextToday]}>
-                        {format(d, 'd')}
-                      </Text>
-                    </View>
-                    <View style={[styles.weekDot, has && !isSelected && styles.weekDotOn]} />
+              {viewMode === 'week' && (
+                <View style={styles.weekWrap}>
+                  <View style={styles.navRow}>
+                    <TouchableOpacity onPress={() => shiftDate(-1)} style={styles.navBtn}>
+                      <Ionicons name="chevron-back" size={20} color={Colors.primary} />
+                    </TouchableOpacity>
+                    <Text style={styles.navLabel}>{format(weekStart, 'MMMM yyyy', { locale })}</Text>
+                    <TouchableOpacity onPress={() => shiftDate(1)} style={styles.navBtn}>
+                      <Ionicons name="chevron-forward" size={20} color={Colors.primary} />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={[styles.weekStrip, isDesktop && styles.weekStripDesktop]}>
+                    {weekDays.map((d) => {
+                      const key = fmtKey(d);
+                      const isSelected = key === selectedDate;
+                      const isToday = isSameDay(d, new Date());
+                      const has = datesWithAppts.has(key);
+                      return (
+                        <TouchableOpacity key={key} style={styles.weekCell} onPress={() => setSelectedDate(key)} activeOpacity={0.8}>
+                          <Text style={[styles.weekDow, isSelected && styles.weekDowSelected]}>
+                            {format(d, 'EEEEEE', { locale })}
+                          </Text>
+                          <View style={[styles.weekNum, isSelected && styles.weekNumSelected, !isSelected && isToday && styles.weekNumToday]}>
+                            <Text style={[styles.weekNumText, isSelected && styles.weekNumTextSelected, !isSelected && isToday && styles.weekNumTextToday]}>
+                              {format(d, 'd')}
+                            </Text>
+                          </View>
+                          <View style={[styles.weekDot, has && !isSelected && styles.weekDotOn]} />
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+
+              {viewMode === 'day' && (
+                <View style={styles.navRow}>
+                  <TouchableOpacity onPress={() => shiftDate(-1)} style={styles.navBtn}>
+                    <Ionicons name="chevron-back" size={20} color={Colors.primary} />
                   </TouchableOpacity>
-                );
-              })}
+                  <Text style={styles.navLabelDay}>{format(parseDay(selectedDate), 'EEEE dd MMMM', { locale })}</Text>
+                  <TouchableOpacity onPress={() => shiftDate(1)} style={styles.navBtn}>
+                    <Ionicons name="chevron-forward" size={20} color={Colors.primary} />
+                  </TouchableOpacity>
+                </View>
+              )}
+            </>
+          );
+
+          const listSection = (
+            <>
+              {/* Selected day header (month + week modes) */}
+              {viewMode !== 'day' && (
+                <View style={styles.dayHeader}>
+                  <Text style={styles.dayTitle}>
+                    {format(parseDay(selectedDate), 'EEEE dd MMMM', { locale })}
+                  </Text>
+                  <View style={styles.countBadge}>
+                    <Text style={styles.countBadgeText}>{dayAppointments.length}</Text>
+                  </View>
+                </View>
+              )}
+              <View style={styles.apptList}>{renderAppointmentList()}</View>
+            </>
+          );
+
+          if (!isDesktop) {
+            return (
+              <>
+                {navSection}
+                {listSection}
+              </>
+            );
+          }
+
+          // Desktop: the calendar/week/day navigator becomes a fixed-width
+          // left column, appointments for the selected day sit in a wide
+          // scrollable right column — a real calendar-app layout instead
+          // of everything stacked full-width down the page.
+          return (
+            <View style={styles.desktopGrid}>
+              <View style={styles.desktopNavCol}>{navSection}</View>
+              <View style={styles.desktopListCol}>{listSection}</View>
             </View>
-          </View>
-        )}
-
-        {viewMode === 'day' && (
-          <View style={styles.navRow}>
-            <TouchableOpacity onPress={() => shiftDate(-1)} style={styles.navBtn}>
-              <Ionicons name="chevron-back" size={20} color={Colors.primary} />
-            </TouchableOpacity>
-            <Text style={styles.navLabelDay}>{format(parseDay(selectedDate), 'EEEE dd MMMM', { locale })}</Text>
-            <TouchableOpacity onPress={() => shiftDate(1)} style={styles.navBtn}>
-              <Ionicons name="chevron-forward" size={20} color={Colors.primary} />
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Selected day header (month + week modes) */}
-        {viewMode !== 'day' && (
-          <View style={styles.dayHeader}>
-            <Text style={styles.dayTitle}>
-              {format(parseDay(selectedDate), 'EEEE dd MMMM', { locale })}
-            </Text>
-            <View style={styles.countBadge}>
-              <Text style={styles.countBadgeText}>{dayAppointments.length}</Text>
-            </View>
-          </View>
-        )}
-
-        <View style={styles.apptList}>{renderAppointmentList()}</View>
+          );
+        })()}
         <View style={{ height: TAB_BAR_CLEARANCE }} />
       </ScrollView>
+      </ResponsiveContainer>
     </SafeAreaView>
   );
 }
@@ -249,15 +285,21 @@ function AppointmentTimeSlot({ appointment, onPress, t }: { appointment: Appoint
   const clientName = appointment.client
     ? `${appointment.client.first_name} ${appointment.client.last_name}`
     : '—';
+  const { hovered, hoverProps } = useHover();
 
   return (
-    <TouchableOpacity style={styles.timeSlot} onPress={onPress} activeOpacity={0.85}>
+    <TouchableOpacity
+      style={[styles.timeSlot, Platform.OS === 'web' && ({ cursor: 'pointer' } as any)]}
+      onPress={onPress}
+      activeOpacity={0.85}
+      {...hoverProps}
+    >
       <View style={styles.timeColumn}>
         <Text style={styles.startTime}>{appointment.start_time?.slice(0, 5)}</Text>
         <View style={styles.timeLine} />
         <Text style={styles.endTime}>{getEndTime(appointment.start_time, appointment.duration_minutes)}</Text>
       </View>
-      <View style={[styles.apptCard, { borderLeftColor: statusColor }]}>
+      <View style={[styles.apptCard, { borderLeftColor: statusColor }, hovered && styles.apptCardHovered]}>
         <View style={CommonStyles.rowBetween}>
           <Text style={styles.apptClientName}>{clientName}</Text>
           <StatusBadge status={appointment.status} label={t(`appointments.statuses.${appointment.status}`)} size="sm" />
@@ -332,6 +374,14 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
   },
   errorBannerText: { color: Colors.danger, fontSize: FontSize.sm, flex: 1 },
+  desktopGrid: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.lg,
+  },
+  desktopNavCol: { width: 360 },
+  desktopListCol: { flex: 1, minWidth: 0 },
+  weekStripDesktop: { flexWrap: 'wrap' },
   calendarWrap: {
     marginHorizontal: Spacing.md,
     borderRadius: BorderRadius.xl,
@@ -440,6 +490,9 @@ const styles = StyleSheet.create({
     padding: Spacing.sm,
     borderLeftWidth: 4,
     ...Shadow.sm,
+  },
+  apptCardHovered: {
+    backgroundColor: Colors.inputBg,
   },
   apptClientName: { fontSize: FontSize.md, fontWeight: '700', color: Colors.textPrimary, flex: 1 },
   apptType: { fontSize: FontSize.sm, color: Colors.textSecondary, marginTop: 3 },
