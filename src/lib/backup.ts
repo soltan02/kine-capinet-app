@@ -69,9 +69,12 @@ function buildBackupHtml(payload: any, dateStr: string): string {
 </body></html>`;
 }
 
-export async function shareBackup(id: string): Promise<void> {
+export async function shareBackup(id: string, preOpenedWindow?: Window | null): Promise<void> {
   // Must happen before any await — see openPrintWindow's doc comment.
-  const printWindow = openPrintWindow();
+  // Callers that do their own async work before calling shareBackup (e.g.
+  // creating the backup first) must open the window themselves and pass
+  // it in via preOpenedWindow instead of relying on this fallback.
+  const printWindow = preOpenedWindow !== undefined ? preOpenedWindow : openPrintWindow();
 
   try {
     const { data, error } = await supabase

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { Alert } from '../../lib/alert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,7 @@ import ScreenHeader from '../../components/ScreenHeader';
 import EmptyState from '../../components/EmptyState';
 import { SkeletonList } from '../../components/Skeleton';
 import { listBackups, createBackupNow, shareBackup, BackupSummary } from '../../lib/backup';
+import { openPrintWindow } from '../../lib/pdfHelpers';
 import Button from '../../components/Button';
 import SectionLabel from '../../components/SectionLabel';
 
@@ -41,12 +42,18 @@ export default function BackupsScreen({ navigation }: { navigation: any }) {
   useEffect(() => { load(); }, []);
 
   const handleExportNow = async () => {
+    if (exporting) return;
+    // Must happen before any await — creating the backup + reloading the
+    // list crosses async gaps that would otherwise cost us the browser's
+    // user-activation window before shareBackup gets a chance to open one.
+    const printWindow = Platform.OS === 'web' ? openPrintWindow() : null;
     setExporting(true);
     try {
       const id = await createBackupNow();
       await load();
-      await shareBackup(id);
+      await shareBackup(id, printWindow);
     } catch (e: any) {
+      printWindow?.close();
       Alert.alert(t('common.error'), t('backups.exportFailed'));
     }
     setExporting(false);

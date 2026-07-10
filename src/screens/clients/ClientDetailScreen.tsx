@@ -5,6 +5,8 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  Modal,
+  Platform,
 } from 'react-native';
 import { Alert } from '../../lib/alert';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,6 +17,7 @@ import { fr, arDZ } from 'date-fns/locale';
 import { supabase, Client, Appointment, Payment, SessionLog, ClientAttachment } from '../../lib/supabase';
 import { useClientsStore } from '../../lib/store';
 import { usePermissions } from '../../lib/permissions';
+import { useResponsive } from '../../hooks/useResponsive';
 import { openDocument } from '../../lib/documents';
 import { exportPatientPdf } from '../../lib/patientExport';
 import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, TAB_BAR_CLEARANCE } from '../../constants/theme';
@@ -52,9 +55,20 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
   const canViewBilling = can('billing:view'); // admin + receptionist only
   const visibleTabs = canViewBilling ? TABS : TABS.filter((tab) => tab !== 'billing');
   const [exporting, setExporting] = useState(false);
+  const [showExportChoice, setShowExportChoice] = useState(false);
+  const { isDesktop } = useResponsive();
 
+  // On web, a 3-button Alert.alert falls back to window.confirm(), which
+  // only supports two outcomes AND consumes the browser's user-activation
+  // state — so the window.open() inside exportPatientPdf gets silently
+  // popup-blocked by the time it runs. Use a real in-app modal instead,
+  // whose button taps are genuine DOM clicks and preserve the gesture.
   const handleExportPdf = () => {
     if (exporting) return;
+    if (Platform.OS === 'web') {
+      setShowExportChoice(true);
+      return;
+    }
     Alert.alert(
       t('clients.exportFile'),
       undefined,
@@ -64,6 +78,11 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
         { text: t('clients.exportWithBilling'), onPress: () => runExport(true) },
       ]
     );
+  };
+
+  const chooseExport = (includeBilling: boolean) => {
+    setShowExportChoice(false);
+    runExport(includeBilling);
   };
 
   const runExport = async (includeBilling: boolean) => {
@@ -451,6 +470,23 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
           <Ionicons name="add" size={28} color={Colors.white} />
         </TouchableOpacity>
       )}
+
+      <Modal visible={showExportChoice} animationType="fade" transparent onRequestClose={() => setShowExportChoice(false)}>
+        <View style={[styles.exportOverlay, isDesktop && styles.exportOverlayDesktop]}>
+          <View style={[styles.exportSheet, isDesktop && styles.exportSheetDesktop]}>
+            <Text style={styles.exportSheetTitle}>{t('clients.exportFile')}</Text>
+            <TouchableOpacity style={styles.exportOption} onPress={() => chooseExport(false)}>
+              <Text style={styles.exportOptionText}>{t('clients.exportWithoutBilling')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.exportOption} onPress={() => chooseExport(true)}>
+              <Text style={styles.exportOptionText}>{t('clients.exportWithBilling')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.exportCancel} onPress={() => setShowExportChoice(false)}>
+              <Text style={styles.exportCancelText}>{t('common.cancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -727,5 +763,52 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     color: Colors.info,
     marginTop: 2,
+  },
+  exportOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  exportOverlayDesktop: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  exportSheet: {
+    backgroundColor: Colors.card,
+    borderTopLeftRadius: BorderRadius.xxl,
+    borderTopRightRadius: BorderRadius.xxl,
+    padding: Spacing.lg,
+    ...Shadow.lg,
+  },
+  exportSheetDesktop: {
+    width: '100%',
+    maxWidth: 420,
+    borderRadius: BorderRadius.xxl,
+  },
+  exportSheetTitle: {
+    fontSize: FontSize.lg,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginBottom: Spacing.md,
+  },
+  exportOption: {
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  exportOptionText: {
+    fontSize: FontSize.md,
+    color: Colors.textPrimary,
+    fontWeight: '500',
+  },
+  exportCancel: {
+    paddingVertical: Spacing.md,
+    marginTop: Spacing.xs,
+    alignItems: 'center',
+  },
+  exportCancelText: {
+    fontSize: FontSize.md,
+    color: Colors.textMuted,
+    fontWeight: '600',
   },
 });
