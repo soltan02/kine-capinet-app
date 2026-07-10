@@ -9,6 +9,8 @@ import ScreenHeader from '../../components/ScreenHeader';
 import EmptyState from '../../components/EmptyState';
 import { SkeletonList } from '../../components/Skeleton';
 import { listBackups, createBackupNow, shareBackup, BackupSummary } from '../../lib/backup';
+import Button from '../../components/Button';
+import SectionLabel from '../../components/SectionLabel';
 
 function formatDate(ts: string) {
   const d = new Date(ts);
@@ -65,23 +67,19 @@ export default function BackupsScreen({ navigation }: { navigation: any }) {
       <ScreenHeader title={t('backups.title')} onBack={() => navigation.goBack()} />
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        <TouchableOpacity style={styles.exportBtn} onPress={handleExportNow} disabled={exporting} activeOpacity={0.85}>
-          {exporting ? (
-            <ActivityIndicator color={Colors.white} />
-          ) : (
-            <>
-              <Ionicons name="cloud-download-outline" size={20} color={Colors.white} />
-              <Text style={styles.exportBtnText}>{t('backups.exportNow')}</Text>
-            </>
-          )}
-        </TouchableOpacity>
+        <Button
+          title={t('backups.exportNow')}
+          onPress={handleExportNow}
+          loading={exporting}
+          icon="cloud-download-outline"
+        />
 
         <View style={styles.noteBox}>
           <Ionicons name="information-circle-outline" size={16} color={Colors.textMuted} />
           <Text style={styles.noteText}>{t('backups.restoreNote')}</Text>
         </View>
 
-        <Text style={styles.sectionTitle}>{t('backups.history')}</Text>
+        <SectionLabel style={{ marginTop: Spacing.lg }}>{t('backups.history')}</SectionLabel>
 
         {loading ? (
           <SkeletonList count={4} />
@@ -112,21 +110,6 @@ export default function BackupsScreen({ navigation }: { navigation: any }) {
 
 const styles = StyleSheet.create({
   scroll: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.md },
-  exportBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.md,
-    ...Shadow.sm,
-  },
-  exportBtnText: {
-    color: Colors.white,
-    fontWeight: '700',
-    fontSize: FontSize.md,
-  },
   noteBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -141,15 +124,6 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     color: Colors.textMuted,
     lineHeight: 17,
-  },
-  sectionTitle: {
-    fontSize: FontSize.xs,
-    fontWeight: '800',
-    color: Colors.textMuted,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginTop: Spacing.lg,
-    marginBottom: Spacing.sm,
   },
   row: {
     flexDirection: 'row',

@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -13,11 +9,12 @@ import {
 import { Alert } from '../../lib/alert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
 import { supabase, Profile } from '../../lib/supabase';
 import { useAuthStore } from '../../lib/store';
-import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles } from '../../constants/theme';
+import { Spacing, CommonStyles, TAB_BAR_CLEARANCE } from '../../constants/theme';
 import ScreenHeader from '../../components/ScreenHeader';
+import TextField from '../../components/TextField';
+import Button from '../../components/Button';
 
 export default function EditUserScreen({ route, navigation }: { route: any; navigation: any }) {
   const { user } = route.params as { user: Profile };
@@ -138,18 +135,12 @@ export default function EditUserScreen({ route, navigation }: { route: any; navi
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
-          <Text style={styles.label}>{t('settings.fullName')}</Text>
-          <TextInput style={styles.input} value={fullName} onChangeText={setFullName} autoCapitalize="words" />
+          <TextField label={t('settings.fullName')} value={fullName} onChangeText={setFullName} autoCapitalize="words" />
 
-          <TouchableOpacity style={styles.saveBtn} onPress={saveName} disabled={loading}>
-            {loading ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>{t('common.save')}</Text>}
-          </TouchableOpacity>
+          <Button title={t('common.save')} onPress={saveName} loading={loading} style={{ marginBottom: Spacing.lg }} />
 
-          <View style={{ height: Spacing.lg }} />
-
-          <Text style={styles.label}>{t('settings.email')}</Text>
-          <TextInput
-            style={styles.input}
+          <TextField
+            label={t('settings.email')}
             placeholder={t('settings.newEmail')}
             keyboardType="email-address"
             autoCapitalize="none"
@@ -157,26 +148,24 @@ export default function EditUserScreen({ route, navigation }: { route: any; navi
             value={newEmail}
             onChangeText={setNewEmail}
           />
-          <TouchableOpacity style={styles.saveBtn} onPress={changeEmail} disabled={emailLoading}>
-            {emailLoading ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>{t('settings.updateEmail')}</Text>}
-          </TouchableOpacity>
+          <Button title={t('settings.updateEmail')} onPress={changeEmail} loading={emailLoading} style={{ marginBottom: Spacing.lg }} />
 
-          <View style={{ height: Spacing.lg }} />
+          <TextField
+            label={isSelf ? t('settings.changeYourPassword') : t('settings.password')}
+            placeholder={t('settings.newPassword')}
+            secureTextEntry
+            value={newPassword}
+            onChangeText={setNewPassword}
+            autoCapitalize="none"
+          />
+          <TextField placeholder={t('settings.confirmPassword')} label="" secureTextEntry value={confirmPassword} onChangeText={setConfirmPassword} autoCapitalize="none" />
 
-          <Text style={styles.label}>{isSelf ? t('settings.changeYourPassword') : t('settings.password')}</Text>
-          <TextInput style={styles.input} placeholder={t('settings.newPassword')} secureTextEntry value={newPassword} onChangeText={setNewPassword} autoCapitalize="none" />
-          <TextInput style={styles.input} placeholder={t('settings.confirmPassword')} secureTextEntry value={confirmPassword} onChangeText={setConfirmPassword} autoCapitalize="none" />
-
-          {isSelf ? (
-            <TouchableOpacity style={styles.saveBtn} onPress={changePasswordSelf} disabled={loading}>
-              {loading ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>{t('settings.changePassword')}</Text>}
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity style={styles.saveBtn} onPress={changePasswordForOther} disabled={loading}>
-              {loading ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>{t('settings.changePassword')}</Text>}
-            </TouchableOpacity>
-          )}
-          <View style={{ height: Spacing.xxl }} />
+          <Button
+            title={t('settings.changePassword')}
+            onPress={isSelf ? changePasswordSelf : changePasswordForOther}
+            loading={loading}
+          />
+          <View style={{ height: TAB_BAR_CLEARANCE }} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -185,8 +174,4 @@ export default function EditUserScreen({ route, navigation }: { route: any; navi
 
 const styles = StyleSheet.create({
   container: { padding: Spacing.lg, flex: 1 },
-  label: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.textSecondary, marginBottom: Spacing.xs },
-  input: { backgroundColor: Colors.inputBg, borderRadius: BorderRadius.md, padding: Spacing.md, fontSize: FontSize.md, color: Colors.textPrimary, borderWidth: 1.5, borderColor: Colors.border, height: 52, marginBottom: Spacing.md },
-  saveBtn: { backgroundColor: Colors.primary, height: 52, borderRadius: BorderRadius.md, alignItems: 'center', justifyContent: 'center', ...Shadow.md },
-  saveBtnText: { color: Colors.white, fontSize: FontSize.lg, fontWeight: '700' },
 });

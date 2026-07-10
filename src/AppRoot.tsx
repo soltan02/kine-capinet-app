@@ -203,7 +203,7 @@ export default function AppRoot() {
     const { ClinicSetupScreen } = screens;
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <SafeAreaProvider>
+        <SafeAreaProvider style={{ flex: 1 }}>
           <ClinicSetupScreen onDone={handleClinicSetupDone} />
         </SafeAreaProvider>
       </GestureHandlerRootView>
@@ -225,7 +225,7 @@ export default function AppRoot() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
+      <SafeAreaProvider style={{ flex: 1 }}>
         <NavigationContainer>
           {isLoggedIn ? (
             showOnboarding && accountRole ? (

@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, FontSize, Spacing, BorderRadius, CommonStyles } from '../../constants/theme';
 import { parseSetupCode, testSetupCode, saveClinicConfig } from '../../lib/clinicConfig';
+import TextField from '../../components/TextField';
+import Button from '../../components/Button';
+import InlineBanner from '../../components/InlineBanner';
 
 export default function ClinicSetupScreen({ onDone }: { onDone: () => void }) {
   const [code, setCode] = useState('');
@@ -45,26 +48,24 @@ export default function ClinicSetupScreen({ onDone }: { onDone: () => void }) {
           </Text>
 
           <View style={styles.card}>
-            <Text style={styles.label}>Code de configuration</Text>
-            <TextInput
-              style={styles.input}
+            <TextField
+              label="Code de configuration"
               value={code}
               onChangeText={setCode}
               placeholder="https://votre-cabinet.supabase.co::eyJ..."
-              placeholderTextColor={Colors.textMuted}
               multiline
               autoCapitalize="none"
               autoCorrect={false}
             />
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            {error ? <InlineBanner type="error" message={error} /> : null}
 
-            <TouchableOpacity style={styles.button} onPress={handleContinue} disabled={testing || !code.trim()} activeOpacity={0.85}>
-              {testing ? (
-                <ActivityIndicator color={Colors.white} />
-              ) : (
-                <Text style={styles.buttonText}>Connecter mon cabinet</Text>
-              )}
-            </TouchableOpacity>
+            <Button
+              title="Connecter mon cabinet"
+              onPress={handleContinue}
+              loading={testing}
+              disabled={!code.trim()}
+              style={{ marginTop: Spacing.sm }}
+            />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -107,39 +108,5 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderRadius: BorderRadius.xl,
     padding: Spacing.lg,
-  },
-  label: {
-    fontSize: FontSize.sm,
-    fontWeight: '700',
-    color: Colors.textSecondary,
-    marginBottom: Spacing.sm,
-  },
-  input: {
-    backgroundColor: Colors.inputBg,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.md,
-    minHeight: 90,
-    fontSize: FontSize.sm,
-    color: Colors.textPrimary,
-    textAlignVertical: 'top',
-  },
-  errorText: {
-    color: Colors.danger,
-    fontSize: FontSize.xs,
-    marginTop: Spacing.sm,
-  },
-  button: {
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.full,
-    paddingVertical: Spacing.md,
-    alignItems: 'center',
-    marginTop: Spacing.lg,
-  },
-  buttonText: {
-    color: Colors.white,
-    fontWeight: '800',
-    fontSize: FontSize.md,
   },
 });

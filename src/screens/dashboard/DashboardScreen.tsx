@@ -12,10 +12,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { format, isToday } from 'date-fns';
 import { fr, arDZ } from 'date-fns/locale';
 import { useAuthStore, useClientsStore, useAppointmentsStore } from '../../lib/store';
-import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles } from '../../constants/theme';
+import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, TAB_BAR_CLEARANCE } from '../../constants/theme';
 import { Appointment } from '../../lib/supabase';
 import { supabase } from '../../lib/supabase';
 import i18n from '../../lib/i18n';
@@ -55,14 +56,37 @@ function AppointmentCard({ appointment, onPress }: { appointment: Appointment; o
   );
 }
 
-function StatCard({ icon, label, value, color }: { icon: string; label: string; value: string | number; color: string }) {
+// Hero tile — the day's headline number gets a gradient tile of its own;
+// the rest become smaller supporting tiles below (StatTile).
+function HeroStat({ icon, label, value }: { icon: string; label: string; value: string | number }) {
   return (
-    <View style={[styles.statCard, { borderLeftColor: color }]}>
-      <View style={[styles.statIcon, { backgroundColor: color + '18' }]}>
-        <Ionicons name={icon as any} size={22} color={color} />
+    <LinearGradient
+      colors={[Colors.primary, Colors.primaryDark]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.heroStat}
+    >
+      <View>
+        <Text style={styles.heroStatValue}>{value}</Text>
+        <Text style={styles.heroStatLabel}>{label}</Text>
       </View>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <View style={styles.heroStatIcon}>
+        <Ionicons name={icon as any} size={20} color={Colors.white} />
+      </View>
+    </LinearGradient>
+  );
+}
+
+function StatTile({ icon, label, value, color }: { icon: string; label: string; value: string | number; color: string }) {
+  return (
+    <View style={styles.statTile}>
+      <View style={styles.statTileTop}>
+        <View style={[styles.statTileIcon, { backgroundColor: color + '18' }]}>
+          <Ionicons name={icon as any} size={14} color={color} />
+        </View>
+        <Text style={styles.statTileLabel}>{label}</Text>
+      </View>
+      <Text style={styles.statTileValue}>{value}</Text>
     </View>
   );
 }
@@ -224,14 +248,14 @@ export default function DashboardScreen({ navigation }: { navigation: any }) {
           <Text style={[CommonStyles.sectionTitle, styles.sectionMargin]}>
             {t('dashboard.quickStats')}
           </Text>
+          <HeroStat icon="calendar" label={t('dashboard.todayAppointments')} value={todayAppointments.length} />
           <View style={styles.statsGrid}>
-            <StatCard icon="people" label={t('dashboard.totalClients')} value={clients.length} color={Colors.primary} />
-            <StatCard icon="calendar" label={t('dashboard.todayAppointments')} value={todayAppointments.length} color={Colors.accent} />
-            <StatCard icon="checkmark-circle" label={t('dashboard.thisWeek')} value={`${thisWeekSessions} ${t('dashboard.sessions')}`} color={Colors.success} />
+            <StatTile icon="people" label={t('dashboard.totalClients')} value={clients.length} color={Colors.primary} />
+            <StatTile icon="checkmark-circle" label={t('dashboard.thisWeek')} value={`${thisWeekSessions} ${t('dashboard.sessions')}`} color={Colors.success} />
             {can('billing:viewTotals') && (
-              <StatCard icon="cash" label={t('dashboard.monthRevenue')} value={`${monthRevenue.toFixed(0)} TND`} color={Colors.secondary} />
+              <StatTile icon="cash" label={t('dashboard.monthRevenue')} value={`${monthRevenue.toFixed(0)} TND`} color={Colors.secondary} />
             )}
-            <StatCard icon="stats-chart" label={t('dashboard.thisMonth')} value={`${thisMonthSessions} ${t('dashboard.sessions')}`} color={Colors.info} />
+            <StatTile icon="stats-chart" label={t('dashboard.thisMonth')} value={`${thisMonthSessions} ${t('dashboard.sessions')}`} color={Colors.info} />
           </View>
         </Animated.View>
 
@@ -299,7 +323,7 @@ export default function DashboardScreen({ navigation }: { navigation: any }) {
           ))
         )}
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: TAB_BAR_CLEARANCE }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -379,38 +403,72 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   sectionMargin: { marginTop: Spacing.lg, marginBottom: Spacing.md },
+  heroStat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    marginBottom: Spacing.sm,
+    ...Shadow.md,
+  },
+  heroStatValue: {
+    fontSize: 34,
+    fontWeight: '800',
+    color: Colors.white,
+    letterSpacing: -0.5,
+  },
+  heroStatLabel: {
+    fontSize: FontSize.sm,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 2,
+  },
+  heroStatIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.sm,
   },
-  statCard: {
+  statTile: {
     backgroundColor: Colors.card,
     borderRadius: BorderRadius.lg,
     padding: Spacing.md,
     flexBasis: '46%',
     flexGrow: 1,
-    borderLeftWidth: 4,
-    ...Shadow.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
-  statIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+  statTileTop: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: Spacing.xs,
     marginBottom: Spacing.sm,
   },
-  statValue: {
-    fontSize: FontSize.xxl,
-    fontWeight: '800',
-    color: Colors.textPrimary,
+  statTileIcon: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  statLabel: {
+  statTileLabel: {
     fontSize: FontSize.xs,
     color: Colors.textMuted,
-    marginTop: 2,
-    fontWeight: '500',
+    fontWeight: '600',
+    flexShrink: 1,
+  },
+  statTileValue: {
+    fontSize: FontSize.lg,
+    fontWeight: '800',
+    color: Colors.textPrimary,
   },
   quickActions: {
     flexDirection: 'row',

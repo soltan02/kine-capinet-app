@@ -96,9 +96,7 @@
     "appointments": "Rendez-vous",
     "sessionNotes": "Notes de séance",
     "billing": "Paiements",
-    "activeClients": "Patients actifs",
-    "inactiveClients": "Inactifs",
-    "inactive": "Inactif",
+    "patientsCount": "{{count}} patients",
     "lastVisit": "Dernière visite",
     "totalSessions": "Total séances",
     "deleteConfirm": "Supprimer ce patient ?",
@@ -189,7 +187,11 @@
     "view_month": "Mois",
     "statusUpdated": "Le statut a bien été mis à jour",
     "updateStatus": "Mettre à jour le statut",
-    "noAppointmentToShow": "Aucun rendez-vous à afficher."
+    "noAppointmentToShow": "Aucun rendez-vous à afficher.",
+    "assignMe": "M'assigner",
+    "unassignMe": "Me retirer",
+    "unassigned": "Non assigné",
+    "noStaffAvailable": "Aucun membre du personnel disponible."
   },
   "sessions": {
     "title": "Notes de séance",

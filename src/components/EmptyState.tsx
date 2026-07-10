@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles } from '../constants/theme';
+import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, Motion } from '../constants/theme';
 
 interface EmptyStateProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -12,9 +12,15 @@ interface EmptyStateProps {
 }
 
 export default function EmptyState({ icon, message, iconSize = 56, variant = 'fill', action }: EmptyStateProps) {
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(opacity, { toValue: 1, duration: Motion.base, useNativeDriver: true }).start();
+  }, []);
+
   const circle = Math.round(iconSize * 1.6);
   const content = (
-    <>
+    <Animated.View style={{ opacity, alignItems: 'center' }}>
       <View style={[styles.iconCircle, { width: circle, height: circle, borderRadius: circle / 2 }]}>
         <Ionicons name={icon} size={iconSize} color={Colors.primary} />
       </View>
@@ -25,7 +31,7 @@ export default function EmptyState({ icon, message, iconSize = 56, variant = 'fi
           <Text style={styles.actionText}>{action.label}</Text>
         </TouchableOpacity>
       ) : null}
-    </>
+    </Animated.View>
   );
 
   if (variant === 'card') {

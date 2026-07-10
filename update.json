@@ -1,5 +1,5 @@
 {
-  "latestVersion": "1.6.7",
+  "latestVersion": "1.6.9",
   "apkUrl": "https://expo.dev/accounts/soltan0102/projects/kine-cabinet-app/builds",
-  "notes": "Export PDF par patient, écran d'accueil corrigé, suppression du mode de connexion local, gestion des utilisateurs améliorée."
+  "notes": "Facturation masquée pour les kinés, attribution des séances (kiné/admin), analyse IA lisant les documents joints, export dossier PDF amélioré, statut actif/inactif retiré."
 }

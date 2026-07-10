@@ -2,23 +2,24 @@ import { Platform, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ─── Theme system ────────────────────────────────────────────
-// Two full palettes (light = "Option A" clean blue, dark = slate).
-// `Colors` is a mutable object: the stored theme is applied in AppRoot
-// BEFORE any screen module is required, so every screen's
-// StyleSheet.create picks up the active palette.
+// Two full palettes ("Modern Indigo-Teal" — indigo primary, teal as
+// secondary accent, cool neutrals). `Colors` is a mutable object: the
+// stored theme is applied in AppRoot BEFORE any screen module is
+// required, so every screen's StyleSheet.create picks up the active
+// palette.
 export type ThemeMode = 'light' | 'dark';
 
 type StatusBarStyle = 'dark-content' | 'light-content';
 
 const LightColors = {
-  // Primary — emerald/teal (Emerald Clinic)
-  primary: '#0D9488',
-  primaryDark: '#0F766E',
-  primaryLight: '#CCFBF1',
-  primaryGradientStart: '#0D9488',
-  primaryGradientEnd: '#2DD4BF',
+  // Primary — indigo
+  primary: '#4F46E5',
+  primaryDark: '#4338CA',
+  primaryLight: '#E3E4F3',
+  primaryGradientStart: '#4F46E5',
+  primaryGradientEnd: '#4338CA',
 
-  // Accent — brighter teal
+  // Accent — teal (secondary, used for selected states)
   accent: '#14B8A6',
   accentLight: '#CCFBF1',
 
@@ -31,61 +32,61 @@ const LightColors = {
   successLight: '#DCFCE7',
   warning: '#F59E0B',
   warningLight: '#FEF3C7',
-  danger: '#EF4444',
-  dangerLight: '#FEE2E2',
+  danger: '#C0362A',
+  dangerLight: '#FEE7E5',
   info: '#0EA5E9',
   infoLight: '#E0F2FE',
 
-  // Neutrals (mint / teal-slate)
+  // Neutrals (cool indigo-tinted grays)
   white: '#FFFFFF',
-  background: '#F0FDFA',
+  background: '#F4F5FB',
   card: '#FFFFFF',
-  border: '#D6E9E4',
-  borderLight: '#E7F5F1',
-  inputBg: '#F4FBF9',
+  border: '#DEDFF0',
+  borderLight: '#E9E9F6',
+  inputBg: '#F7F7FC',
 
-  // Text (teal-slate)
-  textPrimary: '#123B36',
-  textSecondary: '#47645E',
-  textMuted: '#8CA6A0',
+  // Text (cool graphite)
+  textPrimary: '#1B1D2B',
+  textSecondary: '#4F5170',
+  textMuted: '#8587A6',
   textInverse: '#FFFFFF',
 
   // Status badge colors
   scheduled: '#0EA5E9',
   confirmed: '#22C55E',
-  completed: '#0D9488',
-  cancelled: '#EF4444',
+  completed: '#4F46E5',
+  cancelled: '#C0362A',
   no_show: '#F59E0B',
 
   // Payment method colors
   cash: '#22C55E',
   cnam: '#0EA5E9',
   cardPayment: '#8B5CF6',
-  other: '#8CA6A0',
+  other: '#8587A6',
 
   // Tab bar
   tabBar: '#FFFFFF',
-  tabBarBorder: '#E7F5F1',
-  tabActive: '#0D9488',
-  tabInactive: '#9BB5AF',
+  tabBarBorder: '#E9E9F6',
+  tabActive: '#4F46E5',
+  tabInactive: '#A6A8C4',
 
   // Overlays
-  overlay: 'rgba(10,31,28,0.55)',
-  overlayLight: 'rgba(13,148,136,0.10)',
+  overlay: 'rgba(20,20,40,0.55)',
+  overlayLight: 'rgba(79,70,229,0.10)',
 
   // Read at render time by screens (not captured in StyleSheets)
   statusBarStyle: 'dark-content' as StatusBarStyle,
 };
 
 const DarkColors: typeof LightColors = {
-  // Primary — bright teal on deep teal-slate
-  primary: '#2DD4BF',
-  primaryDark: '#0F766E',
-  primaryLight: '#123B36',
-  primaryGradientStart: '#0F766E',
-  primaryGradientEnd: '#2DD4BF',
+  // Primary — bright indigo on deep indigo-slate
+  primary: '#818CF8',
+  primaryDark: '#4338CA',
+  primaryLight: '#2A2A4A',
+  primaryGradientStart: '#4338CA',
+  primaryGradientEnd: '#818CF8',
 
-  accent: '#5EEAD4',
+  accent: '#2DD4BF',
   accentLight: '#123B36',
 
   secondary: '#FBBF24',
@@ -101,35 +102,35 @@ const DarkColors: typeof LightColors = {
   infoLight: '#0C2A3A',
 
   white: '#FFFFFF',
-  background: '#0A1F1C',
-  card: '#11302B',
-  border: '#1E4640',
-  borderLight: '#183A34',
-  inputBg: '#0F2E29',
+  background: '#14141F',
+  card: '#1D1D2E',
+  border: '#312F4A',
+  borderLight: '#28283D',
+  inputBg: '#1A1A29',
 
-  textPrimary: '#E7F5F1',
-  textSecondary: '#9FBDB7',
-  textMuted: '#5F8079',
-  textInverse: '#0A1F1C',
+  textPrimary: '#E7E7F3',
+  textSecondary: '#A6A8C4',
+  textMuted: '#6B6D8C',
+  textInverse: '#14141F',
 
   scheduled: '#38BDF8',
   confirmed: '#4ADE80',
-  completed: '#2DD4BF',
+  completed: '#818CF8',
   cancelled: '#F87171',
   no_show: '#FBBF24',
 
   cash: '#4ADE80',
   cnam: '#38BDF8',
   cardPayment: '#A78BFA',
-  other: '#5F8079',
+  other: '#6B6D8C',
 
-  tabBar: '#11302B',
-  tabBarBorder: '#1E4640',
-  tabActive: '#2DD4BF',
-  tabInactive: '#5F8079',
+  tabBar: '#1D1D2E',
+  tabBarBorder: '#312F4A',
+  tabActive: '#818CF8',
+  tabInactive: '#6B6D8C',
 
-  overlay: 'rgba(3,12,10,0.6)',
-  overlayLight: 'rgba(94,234,212,0.14)',
+  overlay: 'rgba(6,6,14,0.6)',
+  overlayLight: 'rgba(129,140,248,0.14)',
 
   statusBarStyle: 'light-content' as StatusBarStyle,
 };
@@ -155,6 +156,23 @@ export const FontSize = {
   display: 36,
 };
 
+// Named weight scale — replaces scattered literal '600'/'700'/'800' strings.
+export const FontWeight = {
+  regular: '400' as const,
+  medium: '500' as const,
+  semibold: '600' as const,
+  bold: '700' as const,
+  extrabold: '800' as const,
+};
+
+// Shared animation durations (ms) so fade-ins/transitions feel consistent
+// across screens instead of each one picking its own number.
+export const Motion = {
+  fast: 150,
+  base: 250,
+  slow: 400,
+};
+
 // ─── Spacing ─────────────────────────────────────────────────
 export const Spacing = {
   xs: 4,
@@ -167,22 +185,24 @@ export const Spacing = {
   section: 40,
 };
 
-// ─── Border Radius (rounder, "spa" feel) ─────────────────────
+// ─── Border Radius (rounder, modern-SaaS feel) ───────────────
 export const BorderRadius = {
-  sm: 10,
-  md: 14,
+  sm: 12,
+  md: 16,
   lg: 20,
   xl: 24,
-  xxl: 28,
+  xxl: 32,
   full: 999,
 };
 
 // Clearance for the floating pill tab bar: scroll content adds this as
 // bottom padding so nothing hides behind the bar, and the FAB clears it.
-export const TAB_BAR_CLEARANCE = 96;
+// Generous enough to cover the worst case (large safe-area inset on
+// 3-button-nav phones + tab bar height + margin) across any device.
+export const TAB_BAR_CLEARANCE = 140;
 
-// ─── Shadows — soft, teal-tinted ─────────────────────────────
-const SHADOW_TINT = '#0F766E';
+// ─── Shadows — soft, indigo-tinted ───────────────────────────
+const SHADOW_TINT = '#4338CA';
 export const Shadow = {
   sm: {
     shadowColor: SHADOW_TINT,
@@ -313,7 +333,7 @@ const makeCommonStyles = () =>
     },
     primaryButton: {
       backgroundColor: Colors.primary,
-      borderRadius: BorderRadius.full,
+      borderRadius: BorderRadius.lg,
       paddingVertical: Spacing.lg,
       paddingHorizontal: Spacing.xl,
       alignItems: 'center',
@@ -328,7 +348,7 @@ const makeCommonStyles = () =>
     },
     secondaryButton: {
       backgroundColor: Colors.card,
-      borderRadius: BorderRadius.full,
+      borderRadius: BorderRadius.lg,
       paddingVertical: Spacing.md,
       paddingHorizontal: Spacing.xl,
       alignItems: 'center',

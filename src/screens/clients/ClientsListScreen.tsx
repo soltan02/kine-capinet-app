@@ -15,13 +15,12 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useClientsStore } from '../../lib/store';
 import { Client } from '../../lib/supabase';
-import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles } from '../../constants/theme';
+import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, TAB_BAR_CLEARANCE } from '../../constants/theme';
 import ScreenHeader from '../../components/ScreenHeader';
 import EmptyState from '../../components/EmptyState';
 import { SkeletonList } from '../../components/Skeleton';
 
 function ClientListItem({ client, onPress }: { client: Client; onPress: () => void }) {
-  const { t } = useTranslation();
   const initials = `${client.first_name[0]}${client.last_name[0]}`.toUpperCase();
   const avatarColor = getAvatarColor(client.id);
 
@@ -48,11 +47,6 @@ function ClientListItem({ client, onPress }: { client: Client; onPress: () => vo
             <Text style={styles.cnamBadgeText}>CNAM</Text>
           </View>
         ) : null}
-        {!client.is_active ? (
-          <View style={styles.inactiveBadge}>
-            <Text style={styles.inactiveBadgeText}>{t('clients.inactive')}</Text>
-          </View>
-        ) : null}
         <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
       </View>
     </TouchableOpacity>
@@ -70,7 +64,6 @@ export default function ClientsListScreen({ navigation }: { navigation: any }) {
   const { t } = useTranslation();
   const { clients, loading, error, fetchClients } = useClientsStore();
   const [search, setSearch] = useState('');
-  const [activeOnly, setActiveOnly] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -83,13 +76,11 @@ export default function ClientsListScreen({ navigation }: { navigation: any }) {
     setRefreshing(false);
   };
 
-  const filtered = clients.filter((c) => {
-    const matchesSearch = `${c.first_name} ${c.last_name} ${c.phone || ''} ${c.diagnosis || ''}`
+  const filtered = clients.filter((c) =>
+    `${c.first_name} ${c.last_name} ${c.phone || ''} ${c.diagnosis || ''}`
       .toLowerCase()
-      .includes(search.toLowerCase());
-    const matchesActive = activeOnly ? c.is_active : true;
-    return matchesSearch && matchesActive;
-  });
+      .includes(search.toLowerCase())
+  );
 
   return (
     <SafeAreaView style={CommonStyles.safeArea} edges={['top']}>
@@ -97,7 +88,7 @@ export default function ClientsListScreen({ navigation }: { navigation: any }) {
 
       <ScreenHeader
         title={t('clients.title')}
-        subtitle={`${clients.filter(c => c.is_active).length} ${t('clients.activeClients')}`}
+        subtitle={t('clients.patientsCount', { count: clients.length })}
         onBack={() => navigation.navigate('Dashboard')}
         actions={[{ icon: 'person-add-outline', onPress: () => navigation.navigate('AddClient'), accessibilityLabel: t('clients.addClient') }]}
       />
@@ -126,14 +117,6 @@ export default function ClientsListScreen({ navigation }: { navigation: any }) {
             </TouchableOpacity>
           ) : null}
         </View>
-        <TouchableOpacity
-          style={[styles.filterChip, activeOnly && styles.filterChipActive]}
-          onPress={() => setActiveOnly(!activeOnly)}
-        >
-          <Text style={[styles.filterChipText, activeOnly && styles.filterChipTextActive]}>
-            {activeOnly ? t('clients.activeClients') : t('common.all')}
-          </Text>
-        </TouchableOpacity>
       </View>
 
       {/* List */}
@@ -198,29 +181,9 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md,
     color: Colors.textPrimary,
   },
-  filterChip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.card,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-  },
-  filterChipActive: {
-    backgroundColor: Colors.accentLight,
-    borderColor: Colors.accent,
-  },
-  filterChipText: {
-    fontSize: FontSize.xs,
-    fontWeight: '700',
-    color: Colors.textMuted,
-  },
-  filterChipTextActive: {
-    color: Colors.primary,
-  },
   listContent: {
     paddingHorizontal: Spacing.md,
-    paddingBottom: 100,
+    paddingBottom: TAB_BAR_CLEARANCE,
   },
   clientCard: {
     flexDirection: 'row',

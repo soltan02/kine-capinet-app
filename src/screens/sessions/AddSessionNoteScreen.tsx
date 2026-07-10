@@ -5,7 +5,6 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  TextInput,
   ActivityIndicator,
   Switch,
   KeyboardAvoidingView,
@@ -19,6 +18,8 @@ import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../lib/store';
 import { usePermissions } from '../../lib/permissions';
 import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, TAB_BAR_CLEARANCE } from '../../constants/theme';
+import SectionLabel from '../../components/SectionLabel';
+import TextField from '../../components/TextField';
 
 interface Props {
   navigation: any;
@@ -151,7 +152,7 @@ export default function AddSessionNoteScreen({ navigation, route }: Props) {
         <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
           {/* Pain section */}
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionLabel}>{t('sessions.painScoreSection')}</Text>
+            <SectionLabel>{t('sessions.painScoreSection')}</SectionLabel>
             <PainScale selected={painBefore} onSelect={setPainBefore} label={t('sessions.painBefore')} />
             <View style={styles.divider} />
             <PainScale selected={painAfter} onSelect={setPainAfter} label={t('sessions.painAfter')} />
@@ -159,7 +160,7 @@ export default function AddSessionNoteScreen({ navigation, route }: Props) {
 
           {/* Treatment Checkbox Checklists */}
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionLabel}>{t('sessions.treatmentsPerformed')}</Text>
+            <SectionLabel>{t('sessions.treatmentsPerformed')}</SectionLabel>
             <CheckboxRow value={electrotherapy} onValueChange={setElectrotherapy} label={t('sessions.electrotherapy')} />
             <CheckboxRow value={manualTherapy} onValueChange={setManualTherapy} label={t('sessions.manualTherapy')} />
             <CheckboxRow value={exercises} onValueChange={setExercises} label={t('sessions.exercisesReinforcement')} />
@@ -168,26 +169,22 @@ export default function AddSessionNoteScreen({ navigation, route }: Props) {
 
           {/* Detailed notes */}
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionLabel}>{t('sessions.sessionDetails')}</Text>
-            <TextInput
-              style={[styles.input, styles.multiline]}
+            <SectionLabel>{t('sessions.sessionDetails')}</SectionLabel>
+            <TextField
+              label={t('sessions.treatmentDetailsPlaceholder')}
               placeholder={t('sessions.treatmentDetailsPlaceholder')}
-              placeholderTextColor={Colors.textMuted}
               value={treatmentDetails}
               onChangeText={setTreatmentDetails}
               multiline
               numberOfLines={4}
-              textAlignVertical="top"
             />
-            <TextInput
-              style={[styles.input, styles.multiline, { marginTop: Spacing.md }]}
+            <TextField
+              label={t('sessions.therapistNotesPlaceholder')}
               placeholder={t('sessions.therapistNotesPlaceholder')}
-              placeholderTextColor={Colors.textMuted}
               value={therapistNotes}
               onChangeText={setTherapistNotes}
               multiline
               numberOfLines={3}
-              textAlignVertical="top"
             />
           </View>
           <View style={{ height: TAB_BAR_CLEARANCE }} />
@@ -243,14 +240,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
     ...Shadow.sm,
   },
-  sectionLabel: {
-    fontSize: FontSize.xs,
-    fontWeight: '800',
-    color: Colors.primary,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: Spacing.md,
-  },
   painBlock: {
     marginBottom: Spacing.sm,
   },
@@ -295,19 +284,5 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md,
     color: Colors.textPrimary,
     fontWeight: '500',
-  },
-  input: {
-    backgroundColor: Colors.inputBg,
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    fontSize: FontSize.md,
-    color: Colors.textPrimary,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-  },
-  multiline: {
-    height: 90,
-    paddingTop: Spacing.sm,
   },
 });

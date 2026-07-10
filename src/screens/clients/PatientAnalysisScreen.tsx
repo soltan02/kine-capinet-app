@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles } from '../../constants/theme';
+import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, TAB_BAR_CLEARANCE } from '../../constants/theme';
 import ScreenHeader from '../../components/ScreenHeader';
 import { analyzePatient } from '../../lib/ai';
+import Button from '../../components/Button';
 
 // Renders the model's lightly-formatted French text: **Heading** lines become
 // section titles, bullet-ish lines get an accent, everything else is body text.
@@ -67,7 +68,7 @@ export default function PatientAnalysisScreen({ navigation, route }: { navigatio
         actions={!loading ? [{ icon: 'refresh', onPress: run, accessibilityLabel: t('ai.regenerate') }] : []}
       />
 
-      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: TAB_BAR_CLEARANCE }} showsVerticalScrollIndicator={false}>
         {loading ? (
           <View style={styles.center}>
             <ActivityIndicator size="large" color={Colors.primary} />
@@ -81,10 +82,7 @@ export default function PatientAnalysisScreen({ navigation, route }: { navigatio
               color={Colors.textMuted}
             />
             <Text style={styles.errorText}>{t(errorKey)}</Text>
-            <TouchableOpacity style={styles.retryBtn} onPress={run} activeOpacity={0.85}>
-              <Ionicons name="refresh" size={18} color={Colors.white} />
-              <Text style={styles.retryBtnText}>{t('ai.regenerate')}</Text>
-            </TouchableOpacity>
+            <Button title={t('ai.regenerate')} onPress={run} icon="refresh" style={{ marginTop: Spacing.sm }} />
           </View>
         ) : (
           <>
@@ -122,21 +120,6 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md,
     textAlign: 'center',
     paddingHorizontal: Spacing.lg,
-  },
-  retryBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    backgroundColor: Colors.primary,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.full,
-    marginTop: Spacing.sm,
-  },
-  retryBtnText: {
-    color: Colors.white,
-    fontWeight: '700',
-    fontSize: FontSize.sm,
   },
   card: {
     backgroundColor: Colors.card,

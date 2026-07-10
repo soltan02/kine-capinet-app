@@ -139,7 +139,7 @@ export const useAppointmentsStore = create<AppointmentsState>((set, get) => ({
     set({ loading: true, error: null });
     let query = supabase
       .from('appointments')
-      .select(`*, client:clients(id, first_name, last_name, phone)`)
+      .select(`*, client:clients(id, first_name, last_name, phone), profile:profiles!appointments_assigned_to_fkey(id, full_name, role)`)
       .order('date', { ascending: true })
       .order('start_time', { ascending: true });
 
@@ -158,7 +158,7 @@ export const useAppointmentsStore = create<AppointmentsState>((set, get) => ({
     const { data, error } = await supabase
       .from('appointments')
       .insert([appt])
-      .select(`*, client:clients(id, first_name, last_name, phone)`)
+      .select(`*, client:clients(id, first_name, last_name, phone), profile:profiles!appointments_assigned_to_fkey(id, full_name, role)`)
       .single();
     if (error) return { data: null, error: error.message };
     set({ appointments: [...get().appointments, data as Appointment] });
@@ -169,7 +169,7 @@ export const useAppointmentsStore = create<AppointmentsState>((set, get) => ({
       .from('appointments')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id)
-      .select(`*, client:clients(id, first_name, last_name, phone)`)
+      .select(`*, client:clients(id, first_name, last_name, phone), profile:profiles!appointments_assigned_to_fkey(id, full_name, role)`)
       .single();
     if (error) return { error: error.message };
     if (data) {

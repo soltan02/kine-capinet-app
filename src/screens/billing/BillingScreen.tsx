@@ -24,6 +24,7 @@ import { buildInvoiceText } from '../../lib/invoice';
 import ScreenHeader from '../../components/ScreenHeader';
 import EmptyState from '../../components/EmptyState';
 import { SkeletonList } from '../../components/Skeleton';
+import SelectableChip from '../../components/SelectableChip';
 
 const METHOD_ICONS: Record<PaymentMethod, string> = {
   cash: 'cash-outline',
@@ -152,23 +153,16 @@ export default function BillingScreen({ navigation }: { navigation: any }) {
 
         {/* Method filter */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
-          {(['all', 'cash', 'cnam', 'card', 'other'] as const).map((method) => (
-            <TouchableOpacity
-              key={method}
-              style={[styles.filterChip, filterMethod === method && styles.filterChipActive]}
-              onPress={() => setFilterMethod(method)}
-            >
-              {method !== 'all' && (
-                <Ionicons
-                  name={METHOD_ICONS[method] as any}
-                  size={13}
-                  color={filterMethod === method ? Colors.white : Colors.textMuted}
-                />
-              )}
-              <Text style={[styles.filterChipText, filterMethod === method && styles.filterChipTextActive]}>
-                {method === 'all' ? t('common.all') : t(`billing.methods.${method}`)}
-              </Text>
-            </TouchableOpacity>
+          {(['all', 'cash', 'cnam', 'other'] as const).map((method) => (
+            <View key={method} style={{ marginRight: Spacing.sm }}>
+              <SelectableChip
+                label={method === 'all' ? t('common.all') : t(`billing.methods.${method}`)}
+                selected={filterMethod === method}
+                onPress={() => setFilterMethod(method)}
+                icon={method !== 'all' ? (METHOD_ICONS[method] as any) : undefined}
+                color={method !== 'all' ? METHOD_COLORS[method] : undefined}
+              />
+            </View>
           ))}
         </ScrollView>
 
@@ -319,30 +313,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     marginBottom: Spacing.lg,
     flexGrow: 0,
-  },
-  filterChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 7,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    backgroundColor: Colors.card,
-    marginRight: Spacing.sm,
-  },
-  filterChipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  filterChipText: {
-    fontSize: FontSize.xs,
-    fontWeight: '700',
-    color: Colors.textMuted,
-  },
-  filterChipTextActive: {
-    color: Colors.white,
   },
   listContainer: {
     paddingHorizontal: Spacing.md,

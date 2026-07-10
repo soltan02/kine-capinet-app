@@ -309,26 +309,26 @@ CREATE POLICY session_logs_delete ON session_logs
     OR ((SELECT public.current_user_role()) = 'therapist' AND therapist_id = auth.uid())
   );
 
--- ─── payments — all 3 roles can manage; totals/reports admin-only in-app ──
+-- ─── payments — admin + receptionist only; kinés don't see billing ──
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS payments_select ON payments;
 CREATE POLICY payments_select ON payments
-  FOR SELECT USING ((SELECT public.current_user_role()) IN ('admin', 'therapist', 'receptionist'));
+  FOR SELECT USING ((SELECT public.current_user_role()) IN ('admin', 'receptionist'));
 
 DROP POLICY IF EXISTS payments_insert ON payments;
 CREATE POLICY payments_insert ON payments
-  FOR INSERT WITH CHECK ((SELECT public.current_user_role()) IN ('admin', 'therapist', 'receptionist'));
+  FOR INSERT WITH CHECK ((SELECT public.current_user_role()) IN ('admin', 'receptionist'));
 
 DROP POLICY IF EXISTS payments_update ON payments;
 CREATE POLICY payments_update ON payments
   FOR UPDATE
-  USING ((SELECT public.current_user_role()) IN ('admin', 'therapist', 'receptionist'))
-  WITH CHECK ((SELECT public.current_user_role()) IN ('admin', 'therapist', 'receptionist'));
+  USING ((SELECT public.current_user_role()) IN ('admin', 'receptionist'))
+  WITH CHECK ((SELECT public.current_user_role()) IN ('admin', 'receptionist'));
 
 DROP POLICY IF EXISTS payments_delete ON payments;
 CREATE POLICY payments_delete ON payments
-  FOR DELETE USING ((SELECT public.current_user_role()) IN ('admin', 'therapist', 'receptionist'));
+  FOR DELETE USING ((SELECT public.current_user_role()) IN ('admin', 'receptionist'));
 
 -- ─── audit_logs — write-your-own, admin-only read, immutable ─
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;

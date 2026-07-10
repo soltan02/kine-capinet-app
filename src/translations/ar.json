@@ -96,9 +96,7 @@
     "appointments": "المواعيد",
     "sessionNotes": "ملاحظات الجلسات",
     "billing": "المدفوعات",
-    "activeClients": "المرضى النشطون",
-    "inactiveClients": "غير نشطين",
-    "inactive": "غير نشط",
+    "patientsCount": "{{count}} مرضى",
     "lastVisit": "آخر زيارة",
     "totalSessions": "إجمالي الجلسات",
     "deleteConfirm": "حذف هذا المريض؟",
@@ -189,7 +187,11 @@
     "view_month": "شهر",
     "statusUpdated": "تم تحديث الحالة بنجاح",
     "updateStatus": "تحديث الحالة",
-    "noAppointmentToShow": "لا يوجد موعد لعرضه."
+    "noAppointmentToShow": "لا يوجد موعد لعرضه.",
+    "assignMe": "تعييني",
+    "unassignMe": "إلغاء تعييني",
+    "unassigned": "غير معيّن",
+    "noStaffAvailable": "لا يوجد أعضاء طاقم متاحون."
   },
   "sessions": {
     "title": "ملاحظات الجلسة",

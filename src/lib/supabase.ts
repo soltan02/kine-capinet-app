@@ -102,7 +102,7 @@ export type Appointment = {
   updated_at: string;
   // joined
   client?: Client;
-  profile?: Profile;
+  profile?: Profile; // the assigned staff member (assigned_to), when joined
 };
 
 export type SessionLog = {

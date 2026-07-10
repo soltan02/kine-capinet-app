@@ -7,7 +7,6 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   Animated,
   StatusBar,
 } from 'react-native';
@@ -17,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 import { Colors, FontSize, Spacing, BorderRadius, Shadow } from '../../constants/theme';
+import Button from '../../components/Button';
 
 interface LoginScreenProps {
   onLoginSuccess: () => void;
@@ -203,21 +203,13 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
           </View>
         ) : null}
 
-        <TouchableOpacity
-          style={styles.loginButton}
+        <Button
+          title={t('auth.login')}
           onPress={handleAuth}
-          disabled={loading}
-          activeOpacity={0.85}
-        >
-          {loading ? (
-            <ActivityIndicator color={Colors.white} />
-          ) : (
-            <>
-              <Text style={styles.loginButtonText}>{t('auth.login')}</Text>
-              <Ionicons name="arrow-forward" size={18} color={Colors.white} />
-            </>
-          )}
-        </TouchableOpacity>
+          loading={loading}
+          icon="arrow-forward"
+          style={{ marginTop: Spacing.sm }}
+        />
 
         <View style={styles.infoBox}>
           <Text style={styles.infoText}>{t('auth.adminOnlyInfo')}</Text>
@@ -333,22 +325,6 @@ const styles = StyleSheet.create({
     color: Colors.danger,
     fontSize: FontSize.sm,
     fontWeight: '500',
-  },
-  loginButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.full,
-    height: 56,
-    gap: Spacing.sm,
-    marginTop: Spacing.sm,
-    ...Shadow.lg,
-  },
-  loginButtonText: {
-    color: Colors.white,
-    fontSize: FontSize.lg,
-    fontWeight: '700',
   },
   forgotPassword: {
     alignItems: 'center',

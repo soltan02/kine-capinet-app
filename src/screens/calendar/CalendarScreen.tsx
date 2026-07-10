@@ -266,12 +266,22 @@ function AppointmentTimeSlot({ appointment, onPress, t }: { appointment: Appoint
         <View style={styles.apptMeta}>
           <Ionicons name="time-outline" size={12} color={Colors.textMuted} />
           <Text style={styles.apptMetaText}>{appointment.duration_minutes} min</Text>
-          {appointment.notes && (
+          {!!appointment.notes && (
             <>
               <Text style={styles.apptMetaDot}>·</Text>
               <Ionicons name="document-text-outline" size={12} color={Colors.textMuted} />
             </>
           )}
+        </View>
+        <View style={styles.assigneeRow}>
+          <Ionicons
+            name={appointment.profile ? 'person-circle-outline' : 'person-outline'}
+            size={12}
+            color={appointment.profile ? Colors.accent : Colors.textMuted}
+          />
+          <Text style={[styles.assigneeText, !appointment.profile && styles.assigneeTextMuted]}>
+            {appointment.profile?.full_name || t('appointments.unassigned')}
+          </Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -436,4 +446,7 @@ const styles = StyleSheet.create({
   apptMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
   apptMetaText: { fontSize: FontSize.xs, color: Colors.textMuted },
   apptMetaDot: { color: Colors.textMuted },
+  assigneeRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  assigneeText: { fontSize: FontSize.xs, color: Colors.accent, fontWeight: '600' },
+  assigneeTextMuted: { color: Colors.textMuted, fontWeight: '500' },
 });

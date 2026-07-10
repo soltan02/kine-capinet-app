@@ -1,12 +1,24 @@
 import { serve } from "https://deno.land/std@0.201.0/http/server.ts";
+import { encodeBase64 } from "https://deno.land/std@0.201.0/encoding/base64.ts";
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 // ─── AI Patient Analysis (Gemini 2.5 Flash) ──────────────────
 // Requires the secret GEMINI_API_KEY (free key from https://aistudio.google.com/apikey).
 // Set it with:  supabase secrets set GEMINI_API_KEY=...
-// PRIVACY: only de-identified clinical fields are sent to Gemini —
-// never name, CNAM, phone, email, address, or date of birth (age is derived).
+// PRIVACY: the structured clinical fields below remain de-identified —
+// never name, CNAM, phone, email, address, or date of birth (age is
+// derived). Attached documents (see ATTACHMENTS below) are sent to Gemini
+// as-is, by explicit clinic choice: a scanned prescription or photo may
+// carry the patient's name or CNAM number written on it, which bypasses
+// that anonymization for the attachment's content specifically.
 // ACCESS: admin + therapist (kiné) only; enforced here server-side.
+
+// ─── Attachments ──────────────────────────────────────────────
+// Only these mime types are things Gemini can read inline; anything else
+// (e.g. .docx) is silently skipped rather than failing the whole analysis.
+const SUPPORTED_ATTACHMENT_MIME = /^image\/|^application\/pdf$/;
+const MAX_ATTACHMENTS = 5;
+const MAX_TOTAL_ATTACHMENT_BYTES = 15 * 1024 * 1024; // ~15MB combined
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,7 +30,8 @@ const GEMINI_MODEL = 'gemini-2.5-flash';
 
 const SYSTEM_INSTRUCTION = `Tu es un assistant clinique expert en kinésithérapie et thérapie manuelle, au service d'un praticien diplômé.
 Tu aides à la décision : tu ne poses JAMAIS de diagnostic médical et tu ne remplaces pas le jugement du praticien.
-Analyse le dossier anonymisé fourni et réponds en FRANÇAIS, de façon concise et structurée, avec exactement ces sections (titres en gras) :
+Le dossier peut inclure des documents joints (prescriptions, comptes-rendus, imagerie) — lis-les et intègre toute information cliniquement pertinente qu'ils contiennent dans ton analyse.
+Analyse le dossier anonymisé (et les documents joints le cas échéant) et réponds en FRANÇAIS, de façon concise et structurée, avec exactement ces sections (titres en gras) :
 **Résumé** — état global du patient en 2-3 phrases.
 **Évolution de la douleur** — tendance des scores douleur avant/après au fil des séances.
 **Traitements** — techniques utilisées et pertinence.
@@ -94,7 +107,7 @@ serve(async (req: Request) => {
     // 4. Fetch clinical data (service role)
     const { data: client, error: clientErr } = await admin
       .from('clients')
-      .select('diagnosis, contraindications, medical_history, treatment_goals, sessions_prescribed, gender, date_of_birth')
+      .select('diagnosis, contraindications, medical_history, treatment_goals, sessions_prescribed, gender, date_of_birth, attachments')
       .eq('id', clientId)
       .maybeSingle();
     if (clientErr || !client) {
@@ -148,7 +161,35 @@ serve(async (req: Request) => {
         );
       });
     }
+    // 5b. Fetch attached documents (best-effort — a failed download just
+    // means that one attachment is skipped, never fails the analysis).
+    const attachments = (c.attachments as Array<{ path?: string; mime?: string; name?: string }>) || [];
+    const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [];
+    let totalBytes = 0;
+    let includedCount = 0;
+    for (const att of attachments) {
+      if (includedCount >= MAX_ATTACHMENTS || totalBytes >= MAX_TOTAL_ATTACHMENT_BYTES) break;
+      if (!att.path || !att.mime || !SUPPORTED_ATTACHMENT_MIME.test(att.mime)) continue;
+      try {
+        const { data: blob, error: dlErr } = await admin.storage.from('client-documents').download(att.path);
+        if (dlErr || !blob) continue;
+        const bytes = new Uint8Array(await blob.arrayBuffer());
+        if (totalBytes + bytes.length > MAX_TOTAL_ATTACHMENT_BYTES) continue;
+        parts.push({ inlineData: { mimeType: att.mime, data: encodeBase64(bytes) } });
+        totalBytes += bytes.length;
+        includedCount++;
+      } catch (_) {
+        // Skip this attachment, keep going.
+      }
+    }
+    lines.push('');
+    lines.push(
+      includedCount > 0
+        ? `${includedCount} document(s) joint(s) ci-après (prescriptions, comptes-rendus, imagerie) — à prendre en compte dans l'analyse.`
+        : 'Aucun document lisible joint.'
+    );
     const userPrompt = lines.join('\n');
+    parts.unshift({ text: userPrompt });
 
     // 6. Call Gemini
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
@@ -157,7 +198,7 @@ serve(async (req: Request) => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
-        contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+        contents: [{ role: 'user', parts }],
         generationConfig: { temperature: 0.4, maxOutputTokens: 1400 },
       }),
     });

@@ -56,8 +56,6 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'appointments:manage',
     'sessions:view',
     'sessions:manage',
-    'billing:view',
-    'billing:manage',
     'settings:view',
     'dashboard:view',
     'ai:analyze',

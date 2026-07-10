@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="%LANG_ISO_CODE%">
+  <head>
+    <meta charset="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>%WEB_TITLE%</title>
+    <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
+    <style id="expo-reset">
+      /* These styles make the body full-height */
+      html,
+      body {
+        height: 100%;
+        background-color: #010605;
+      }
+      /* These styles disable body scrolling if you are using <ScrollView> */
+      body {
+        overflow: hidden;
+      }
+      /* These styles make the root element full-height */
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+    </style>
+    <!--
+      Pre-boot loader: pure CSS/HTML, no JS required, so the browser paints
+      it on the very first frame — before the JS bundle has even started
+      downloading. Mirrors AppIntro.tsx exactly (same background, same icon,
+      same spinner style) so cold loads and reload-driven theme switches
+      read as one continuous "loading the app" screen instead of a blank
+      white flash followed by a second, different-looking splash.
+    -->
+    <style id="preboot-loader-style">
+      #preboot-loader {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: #010605;
+        z-index: 9999;
+        transition: opacity 0.15s ease-out;
+      }
+      #preboot-loader img {
+        width: 160px;
+        height: 160px;
+      }
+      #preboot-loader .preboot-spinner {
+        margin-top: 28px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid rgba(45, 212, 191, 0.25);
+        border-top-color: #2DD4BF;
+        animation: preboot-spin 0.7s linear infinite;
+      }
+      #preboot-loader .preboot-credit {
+        position: absolute;
+        bottom: 48px;
+        font-size: 15px;
+        font-weight: 600;
+        font-family: -apple-system, sans-serif;
+        color: #EAF6F4;
+      }
+      #preboot-loader .preboot-credit span {
+        color: #2DD4BF;
+      }
+      @keyframes preboot-spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Use static rendering with Expo Router to support running without JavaScript. -->
+    <noscript>
+      You need to enable JavaScript to run this app.
+    </noscript>
+    <div id="preboot-loader">
+      <img src="/splash-icon.png" alt="" />
+      <div class="preboot-spinner"></div>
+      <div class="preboot-credit">Made By <span>Soltan</span></div>
+    </div>
+    <!-- The root element for your Expo app. -->
+    <div id="root"></div>
+    <script>
+      // Remove the static loader as soon as React mounts anything into
+      // #root — AppIntro (same look) has taken over by then, so there is
+      // no visible handoff. Falls back to a timeout in case #root never
+      // gets children (e.g. a startup error before AppIntro can mount).
+      (function () {
+        var root = document.getElementById('root');
+        var loader = document.getElementById('preboot-loader');
+        if (!root || !loader) return;
+        var remove = function () {
+          loader.style.opacity = '0';
+          setTimeout(function () { loader.remove(); }, 150);
+        };
+        var observer = new MutationObserver(function () {
+          if (root.firstChild) {
+            observer.disconnect();
+            remove();
+          }
+        });
+        observer.observe(root, { childList: true });
+        setTimeout(remove, 8000);
+      })();
+    </script>
+  </body>
+</html>

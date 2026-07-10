@@ -3,13 +3,11 @@ import {
   View,
   Text,
   ScrollView,
-  TextInput,
   StyleSheet,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Switch,
   Linking,
 } from 'react-native';
 import { Alert } from '../../lib/alert';
@@ -23,52 +21,13 @@ import { Client, ClientAttachment } from '../../lib/supabase';
 import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, TAB_BAR_CLEARANCE } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import { pickDocument, pickImage, uploadClientDocument, getDocumentUrl, deleteClientDocument, PickedFile } from '../../lib/documents';
+import SectionLabel from '../../components/SectionLabel';
+import SelectableChip from '../../components/SelectableChip';
+import TextField from '../../components/TextField';
 
 interface Props {
   navigation: any;
   route?: { params?: { client?: Client } };
-}
-
-// Defined at module level (stable identity) so typing into a field never
-// remounts the TextInput and drops focus after one character.
-function FormField({
-  label,
-  value,
-  onChangeText,
-  error,
-  placeholder,
-  keyboardType = 'default',
-  multiline = false,
-  required = false,
-}: {
-  label: string;
-  value: string;
-  onChangeText: (v: string) => void;
-  error?: string;
-  placeholder?: string;
-  keyboardType?: any;
-  multiline?: boolean;
-  required?: boolean;
-}) {
-  return (
-    <View style={styles.fieldGroup}>
-      <Text style={styles.label}>
-        {label} {required ? <Text style={styles.requiredStar}>*</Text> : null}
-      </Text>
-      <TextInput
-        style={[styles.input, multiline && styles.multilineInput, error && styles.inputError]}
-        placeholder={placeholder || label}
-        placeholderTextColor={Colors.textMuted}
-        value={value}
-        onChangeText={onChangeText}
-        keyboardType={keyboardType}
-        multiline={multiline}
-        numberOfLines={multiline ? 3 : 1}
-        textAlignVertical={multiline ? 'top' : 'center'}
-      />
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
-    </View>
-  );
 }
 
 export default function AddEditClientScreen({ navigation, route }: Props) {
@@ -221,7 +180,7 @@ export default function AddEditClientScreen({ navigation, route }: Props) {
     fieldKey: keyof typeof form,
     opts: { placeholder?: string; keyboardType?: any; multiline?: boolean; required?: boolean } = {}
   ) => (
-    <FormField
+    <TextField
       label={label}
       value={String(form[fieldKey] || '')}
       onChangeText={(v) => setField(fieldKey, v)}
@@ -259,9 +218,9 @@ export default function AddEditClientScreen({ navigation, route }: Props) {
         <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
           {/* Section: Identity */}
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>
+            <SectionLabel>
               <Ionicons name="person-outline" size={14} /> {t('clients.clientInfo')}
-            </Text>
+            </SectionLabel>
             <View style={styles.rowFields}>
               <View style={{ flex: 1 }}>
                 {field(t('clients.firstName'), 'first_name', { required: true })}
@@ -283,20 +242,13 @@ export default function AddEditClientScreen({ navigation, route }: Props) {
               <Text style={styles.label}>{t('clients.gender')}</Text>
               <View style={styles.genderRow}>
                 {(['male', 'female'] as const).map((g) => (
-                  <TouchableOpacity
+                  <SelectableChip
                     key={g}
-                    style={[styles.genderChip, form.gender === g && styles.genderChipActive]}
+                    label={t(`common.${g}`)}
+                    selected={form.gender === g}
                     onPress={() => setField('gender', form.gender === g ? '' : g)}
-                  >
-                    <Ionicons
-                      name={g === 'male' ? 'male-outline' : 'female-outline'}
-                      size={16}
-                      color={form.gender === g ? Colors.white : Colors.textSecondary}
-                    />
-                    <Text style={[styles.genderChipText, form.gender === g && styles.genderChipTextActive]}>
-                      {t(`common.${g}`)}
-                    </Text>
-                  </TouchableOpacity>
+                    icon={g === 'male' ? 'male-outline' : 'female-outline'}
+                  />
                 ))}
               </View>
             </View>
@@ -304,9 +256,9 @@ export default function AddEditClientScreen({ navigation, route }: Props) {
 
           {/* Section: Advanced EHR Clinical details */}
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>
+            <SectionLabel>
               <Ionicons name="medkit-outline" size={14} /> {t('clients.medicalRecord')}
-            </Text>
+            </SectionLabel>
             {field(t('clients.diagnosis'), 'diagnosis', { multiline: true })}
             {field(t('clients.contraindications'), 'contraindications', { multiline: true, placeholder: t('clients.contraindicationsPlaceholder') })}
             {field(t('clients.treatmentGoals'), 'treatment_goals', { multiline: true, placeholder: t('clients.treatmentGoalsPlaceholder') })}
@@ -316,9 +268,9 @@ export default function AddEditClientScreen({ navigation, route }: Props) {
 
           {canManageDocs && (
             <View style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>
+              <SectionLabel>
                 <Ionicons name="attach-outline" size={14} /> {t('clients.medicalDocuments')}
-              </Text>
+              </SectionLabel>
 
               {!isEditing ? (
                 <Text style={styles.emptyAttachmentText}>{t('clients.saveFirstForDocs')}</Text>
@@ -426,14 +378,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
     ...Shadow.sm,
   },
-  sectionTitle: {
-    fontSize: FontSize.xs,
-    fontWeight: '800',
-    color: Colors.primary,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: Spacing.md,
-  },
   fieldGroup: {
     marginBottom: Spacing.md,
   },
@@ -443,32 +387,6 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginBottom: Spacing.xs,
   },
-  requiredStar: {
-    color: Colors.danger,
-  },
-  input: {
-    backgroundColor: Colors.inputBg,
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    fontSize: FontSize.md,
-    color: Colors.textPrimary,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    height: 48,
-  },
-  multilineInput: {
-    height: 70,
-    paddingTop: Spacing.sm,
-  },
-  inputError: {
-    borderColor: Colors.danger,
-  },
-  errorText: {
-    color: Colors.danger,
-    fontSize: FontSize.xs,
-    marginTop: 3,
-  },
   rowFields: {
     flexDirection: 'row',
     gap: Spacing.md,
@@ -476,29 +394,6 @@ const styles = StyleSheet.create({
   genderRow: {
     flexDirection: 'row',
     gap: Spacing.sm,
-  },
-  genderChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    backgroundColor: Colors.inputBg,
-  },
-  genderChipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  genderChipText: {
-    fontSize: FontSize.sm,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-  },
-  genderChipTextActive: {
-    color: Colors.white,
   },
   docBtnRow: {
     flexDirection: 'row',

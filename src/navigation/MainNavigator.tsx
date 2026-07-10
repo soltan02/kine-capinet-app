@@ -30,10 +30,23 @@ import BackupsScreen from '../screens/settings/BackupsScreen';
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
+// On web, @react-navigation/stack's CardContent switches to a "page" layout
+// (minHeight: '100%', no flex/overflow containment) whenever the stack fills
+// the whole viewport, so document.body can take over scrolling. Expo's web
+// template does the opposite (body { overflow: hidden }), since every screen
+// here scrolls via its own ScrollView — the two assumptions collide and no
+// screen can scroll at all. Forcing the "card" layout (flex:1 + overflow
+// hidden, already the native default) restores it; harmless on native, which
+// never hits the "page" branch since it depends on `document`.
+const stackScreenOptions = {
+  headerShown: false,
+  cardStyle: { flex: 1, minHeight: 0, overflow: 'hidden' as const },
+};
+
 // ─── Clients Stack ────────────────────────────────────────────
 function ClientsStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={stackScreenOptions}>
       <Stack.Screen name="ClientsList" component={ClientsListScreen} />
       <Stack.Screen name="ClientDetail" component={ClientDetailScreen} />
       <Stack.Screen name="AddClient" component={AddEditClientScreen} />
@@ -48,7 +61,7 @@ function ClientsStack() {
 // ─── Dashboard Stack ──────────────────────────────────────────
 function DashboardStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={stackScreenOptions}>
       <Stack.Screen name="DashboardHome" component={DashboardScreen} />
       <Stack.Screen name="AddClient" component={AddEditClientScreen} />
       <Stack.Screen name="AppointmentDetail" component={AppointmentDetailScreen} />
@@ -60,7 +73,7 @@ function DashboardStack() {
 // ─── Calendar Stack ───────────────────────────────────────────
 function CalendarStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={stackScreenOptions}>
       <Stack.Screen name="CalendarHome" component={CalendarScreen} />
       <Stack.Screen name="AddAppointment" component={AddAppointmentScreen} />
       <Stack.Screen name="AppointmentDetail" component={AppointmentDetailScreen} />
@@ -71,7 +84,7 @@ function CalendarStack() {
 // ─── Billing Stack ────────────────────────────────────────────
 function BillingStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={stackScreenOptions}>
       <Stack.Screen name="BillingHome" component={BillingScreen} />
       <Stack.Screen name="AddPayment" component={AddPaymentScreen} />
     </Stack.Navigator>
@@ -81,7 +94,7 @@ function BillingStack() {
 // ─── Settings Stack ───────────────────────────────────────────
 function SettingsStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={stackScreenOptions}>
       <Stack.Screen name="SettingsHome" component={SettingsScreen} />
       <Stack.Screen name="UserManagement" component={UserManagementScreen} />
       <Stack.Screen name="AuditLogScreen" component={AuditLogScreen} />

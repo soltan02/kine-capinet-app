@@ -2,11 +2,9 @@
 import {
   View,
   Text,
-  TextInput,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -19,6 +17,9 @@ import { supabase, UserRole } from '../../lib/supabase';
 import { useAuditStore } from '../../lib/auditStore';
 import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, TAB_BAR_CLEARANCE } from '../../constants/theme';
 import ScreenHeader from '../../components/ScreenHeader';
+import TextField from '../../components/TextField';
+import Button from '../../components/Button';
+import SectionLabel from '../../components/SectionLabel';
 
 const ROLES: { key: UserRole; icon: string }[] = [
   { key: 'admin', icon: 'ribbon-outline' },
@@ -114,32 +115,24 @@ export default function AddUserScreen({ navigation }: { navigation: any }) {
       >
         <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
           {/* Full Name */}
-          <View style={styles.field}>
-            <Text style={styles.label}>{t('settings.fullName')}</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Dr. John Doe"
-              placeholderTextColor={Colors.textMuted}
-              value={fullName}
-              onChangeText={setFullName}
-              autoCapitalize="words"
-            />
-          </View>
+          <TextField
+            label={t('settings.fullName')}
+            placeholder="Dr. John Doe"
+            value={fullName}
+            onChangeText={setFullName}
+            autoCapitalize="words"
+          />
 
           {/* Email */}
-          <View style={styles.field}>
-            <Text style={styles.label}>{t('auth.email')}</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="email@example.com"
-              placeholderTextColor={Colors.textMuted}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-            />
-          </View>
+          <TextField
+            label={t('auth.email')}
+            placeholder="email@example.com"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+          />
 
           <View style={[styles.infoBox, { marginBottom: Spacing.lg }]}>
             <Ionicons name="lock-closed-outline" size={18} color={Colors.primary} style={{ marginRight: Spacing.sm }} />
@@ -147,8 +140,8 @@ export default function AddUserScreen({ navigation }: { navigation: any }) {
           </View>
 
           {/* Role selector */}
-          <View style={styles.field}>
-            <Text style={styles.label}>{t('settings.role')}</Text>
+          <View style={{ marginBottom: Spacing.lg }}>
+            <SectionLabel>{t('settings.role')}</SectionLabel>
             <View style={styles.roleGrid}>
               {ROLES.map((role) => {
                 const isSelected = selectedRole === role.key;
@@ -179,21 +172,13 @@ export default function AddUserScreen({ navigation }: { navigation: any }) {
           </View>
 
           {/* Create button */}
-          <TouchableOpacity
-            style={styles.createBtn}
+          <Button
+            title={t('settings.addUser')}
             onPress={handleCreate}
-            disabled={loading}
-            activeOpacity={0.85}
-          >
-            {loading ? (
-              <ActivityIndicator color={Colors.white} />
-            ) : (
-              <>
-                <Ionicons name="person-add-outline" size={20} color={Colors.white} />
-                <Text style={styles.createBtnText}>{t('settings.addUser')}</Text>
-              </>
-            )}
-          </TouchableOpacity>
+            loading={loading}
+            icon="person-add-outline"
+            style={{ marginTop: Spacing.md }}
+          />
 
           {generatedPassword ? (
             <View style={styles.passwordCard}>
@@ -223,19 +208,6 @@ export default function AddUserScreen({ navigation }: { navigation: any }) {
 
 const styles = StyleSheet.create({
   scroll: { paddingHorizontal: Spacing.lg },
-  field: { marginBottom: Spacing.lg },
-  label: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.textSecondary, marginBottom: Spacing.xs, letterSpacing: 0.3 },
-  input: {
-    backgroundColor: Colors.inputBg,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    fontSize: FontSize.md,
-    color: Colors.textPrimary,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    height: 52,
-  },
   infoBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -271,18 +243,6 @@ const styles = StyleSheet.create({
   roleName: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.textPrimary, textAlign: 'center' },
   roleNameSelected: { color: Colors.white },
   roleCheck: { position: 'absolute', top: Spacing.sm, right: Spacing.sm },
-  createBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.md,
-    height: 54,
-    gap: Spacing.sm,
-    marginTop: Spacing.md,
-    ...Shadow.md,
-  },
-  createBtnText: { color: Colors.white, fontSize: FontSize.lg, fontWeight: '700' },
   passwordCard: {
     marginTop: Spacing.lg,
     backgroundColor: Colors.card,

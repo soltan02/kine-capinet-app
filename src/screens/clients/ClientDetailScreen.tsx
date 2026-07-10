@@ -18,13 +18,14 @@ import { useClientsStore } from '../../lib/store';
 import { usePermissions } from '../../lib/permissions';
 import { getDocumentUrl } from '../../lib/documents';
 import { exportPatientPdf } from '../../lib/patientExport';
-import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles } from '../../constants/theme';
+import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, TAB_BAR_CLEARANCE } from '../../constants/theme';
 import i18n from '../../lib/i18n';
 import ScreenHeader from '../../components/ScreenHeader';
 import EmptyState from '../../components/EmptyState';
 import { getStatusColor } from '../../components/StatusBadge';
 import ProgressTimeline from '../../components/ProgressTimeline';
 import { SkeletonList } from '../../components/Skeleton';
+import Button from '../../components/Button';
 
 const TABS = ['info', 'appointments', 'sessions', 'progress', 'billing'] as const;
 type Tab = typeof TABS[number];
@@ -49,6 +50,8 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
   const { can } = usePermissions();
   const canViewDocs = can('sessions:view'); // admin + kiné only
   const canAnalyze = can('ai:analyze'); // admin + kiné only
+  const canViewBilling = can('billing:view'); // admin + receptionist only
+  const visibleTabs = canViewBilling ? TABS : TABS.filter((tab) => tab !== 'billing');
   const [exporting, setExporting] = useState(false);
 
   const handleExportPdf = () => {
@@ -222,15 +225,6 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
           <Text style={styles.heroDiagnosis}>{client.diagnosis}</Text>
         ) : null}
         <View style={styles.heroBadges}>
-          {client.is_active ? (
-            <View style={styles.activeBadge}>
-              <Text style={styles.activeBadgeText}>{t('clients.activeClients')}</Text>
-            </View>
-          ) : (
-            <View style={[styles.activeBadge, { backgroundColor: Colors.dangerLight }]}>
-              <Text style={[styles.activeBadgeText, { color: Colors.danger }]}>{t('clients.inactiveClients')}</Text>
-            </View>
-          )}
           {client.cnam_number ? (
             <View style={styles.cnamBadge}>
               <Text style={styles.cnamBadgeText}>CNAM: {client.cnam_number}</Text>
@@ -241,7 +235,7 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
 
       {/* Tabs */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabBar}>
-        {TABS.map((tab) => (
+        {visibleTabs.map((tab) => (
           <TouchableOpacity
             key={tab}
             style={[styles.tab, activeTab === tab && styles.tabActive]}
@@ -288,20 +282,21 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
             ) : null}
 
             {canAnalyze ? (
-              <TouchableOpacity
-                style={styles.aiBtn}
+              <Button
+                title={t('ai.analyzeButton')}
                 onPress={() => navigation.navigate('PatientAnalysis', { clientId: client.id, clientName: fullName })}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="sparkles" size={16} color={Colors.white} />
-                <Text style={styles.aiBtnText}>{t('ai.analyzeButton')}</Text>
-              </TouchableOpacity>
+                icon="sparkles"
+                style={{ marginTop: Spacing.lg }}
+              />
             ) : null}
 
-            <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
-              <Ionicons name="trash-outline" size={16} color={Colors.danger} />
-              <Text style={styles.deleteBtnText}>{t('common.delete')}</Text>
-            </TouchableOpacity>
+            <Button
+              title={t('common.delete')}
+              onPress={handleDelete}
+              variant="danger"
+              icon="trash-outline"
+              style={{ marginTop: Spacing.sm }}
+            />
           </View>
         )}
 
@@ -442,7 +437,7 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
             </>
           )
         )}
-        <View style={{ height: 100 }} />
+        <View style={{ height: TAB_BAR_CLEARANCE }} />
       </ScrollView>
 
       {/* FAB */}
@@ -504,17 +499,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
     flexWrap: 'wrap',
     justifyContent: 'center',
-  },
-  activeBadge: {
-    backgroundColor: Colors.successLight,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 4,
-    borderRadius: BorderRadius.full,
-  },
-  activeBadgeText: {
-    fontSize: FontSize.xs,
-    fontWeight: '700',
-    color: Colors.success,
   },
   cnamBadge: {
     backgroundColor: Colors.infoLight,
@@ -588,32 +572,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginTop: 2,
   },
-  aiBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    marginTop: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.primary,
-    ...Shadow.sm,
-  },
-  aiBtnText: {
-    color: Colors.white,
-    fontWeight: '700',
-    fontSize: FontSize.sm,
-  },
-  deleteBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    marginTop: Spacing.sm,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.dangerLight,
-  },
   attachmentBlock: {
     marginTop: Spacing.md,
     backgroundColor: Colors.inputBg,
@@ -638,11 +596,6 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     color: Colors.textMuted,
     marginTop: 2,
-  },
-  deleteBtnText: {
-    color: Colors.danger,
-    fontWeight: '700',
-    fontSize: FontSize.sm,
   },
   listCard: {
     flexDirection: 'row',

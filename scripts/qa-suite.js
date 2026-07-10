@@ -100,16 +100,15 @@ const callFn = async (fn, token, body) => {
     const { data: sTher } = await therS.client.from('session_logs').select('*').eq('client_id', cIns.id);
     ok('Sessions: therapist CAN read clinical notes', (sTher || []).length >= 1);
 
-    // 8. PAYMENTS — all 3 roles can create/manage payments (revenue totals
-    // are restricted to admin only at the app UI level, not via RLS)
+    // 8. PAYMENTS — admin + receptionist only; kinés (therapist) don't see billing
     const { error: pRec } = await recS.client.from('payments')
       .insert([{ client_id: cIns.id, amount: 50, payment_method: 'cash', status: 'paid', created_by: receptionistU.id, paid_at: new Date().toISOString() }]);
     ok('Payments: receptionist can CREATE', !pRec, pRec?.message);
     const { error: pTher } = await therS.client.from('payments')
       .insert([{ client_id: cIns.id, amount: 99, payment_method: 'cash', status: 'paid', created_by: therapistU.id, paid_at: new Date().toISOString() }]);
-    ok('Payments: therapist can CREATE', !pTher, pTher?.message);
+    ok('Payments: therapist CANNOT create', !!pTher, 'expected insert to be denied by RLS');
     const { data: pReadT } = await therS.client.from('payments').select('*').eq('client_id', cIns.id);
-    ok('Payments: therapist CAN read', (pReadT || []).length >= 1);
+    ok('Payments: RLS hides payments from therapist', (pReadT || []).length === 0, `saw ${(pReadT||[]).length} rows`);
 
     // 9. AUDIT LOGS
     const { error: auIns } = await therS.client.from('audit_logs').insert([{ user_id: therapistU.id, action: 'qa_test', details: 'qa' }]);

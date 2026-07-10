@@ -1,7 +1,5 @@
-import * as Print from 'expo-print';
-import * as Sharing from 'expo-sharing';
 import { supabase } from './supabase';
-import { esc, table, PDF_STYLES } from './pdfHelpers';
+import { table, section, letterhead, footer, presentHtmlDocument, PDF_STYLES } from './pdfHelpers';
 
 // ─── Admin data export / automated backups ───────────────────
 // Snapshots are created server-side (weekly cron + this on-demand RPC),
@@ -45,32 +43,29 @@ function buildBackupHtml(payload: any, dateStr: string): string {
 <html><head><meta charset="utf-8">
 <style>${PDF_STYLES}</style></head>
 <body>
-  <h1>Kine Cabinet — Sauvegarde des données</h1>
-  <div class="subtitle">Générée le ${esc(dateStr)} · ${clients.length} patients, ${appointments.length} rendez-vous, ${sessionLogs.length} notes de séance, ${payments.length} paiements</div>
+  ${letterhead('Sauvegarde des données', `Générée le ${dateStr} · ${clients.length} patients, ${appointments.length} rendez-vous, ${sessionLogs.length} notes de séance, ${payments.length} paiements`)}
 
-  <h2>Patients (${clients.length})</h2>
-  ${table(
-    ['Nom', 'Téléphone', 'Diagnostic', 'CNAM', 'Actif'],
-    clients.map((c) => [`${c.first_name} ${c.last_name}`, c.phone, c.diagnosis, c.cnam_number, c.is_active ? 'Oui' : 'Non'])
-  )}
+  ${section(`Patients (${clients.length})`, table(
+    ['Nom', 'Téléphone', 'Diagnostic', 'CNAM'],
+    clients.map((c) => [`${c.first_name} ${c.last_name}`, c.phone, c.diagnosis, c.cnam_number])
+  ))}
 
-  <h2>Rendez-vous (${appointments.length})</h2>
-  ${table(
+  ${section(`Rendez-vous (${appointments.length})`, table(
     ['Patient', 'Date', 'Heure', 'Type', 'Statut'],
     appointments.map((a) => [clientName(a.client_id), a.date, String(a.start_time || '').slice(0, 5), a.type, a.status])
-  )}
+  ))}
 
-  <h2>Notes de séance (${sessionLogs.length})</h2>
-  ${table(
+  ${section(`Notes de séance (${sessionLogs.length})`, table(
     ['Patient', 'Date', 'Douleur avant', 'Douleur après', 'Notes'],
     sessionLogs.map((s) => [clientName(s.client_id), String(s.started_at || '').slice(0, 10), s.pain_before, s.pain_after, s.therapist_notes])
-  )}
+  ))}
 
-  <h2>Paiements (${payments.length})</h2>
-  ${table(
+  ${section(`Paiements (${payments.length})`, table(
     ['Patient', 'Date', 'Montant (TND)', 'Méthode', 'Statut'],
     payments.map((p) => [clientName(p.client_id), String(p.paid_at || '').slice(0, 10), Number(p.amount).toFixed(3), p.payment_method, p.status])
-  )}
+  ))}
+
+  ${footer()}
 </body></html>`;
 }
 
@@ -84,9 +79,5 @@ export async function shareBackup(id: string): Promise<void> {
 
   const dateStr = String(data.created_at).slice(0, 10);
   const html = buildBackupHtml(data.payload, dateStr);
-  const { uri } = await Print.printToFileAsync({ html });
-
-  const canShare = await Sharing.isAvailableAsync();
-  if (!canShare) throw new Error('sharing_unavailable');
-  await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Kine Cabinet — sauvegarde' });
+  await presentHtmlDocument(html, 'Kine Cabinet — sauvegarde');
 }

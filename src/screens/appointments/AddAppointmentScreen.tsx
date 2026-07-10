@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TextInput,
   TouchableOpacity,
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -18,6 +17,10 @@ import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, TAB_BAR_
 import { Appointment, AppointmentStatus, AppointmentType, supabase } from '../../lib/supabase';
 import { useAppointmentsStore, useAuthStore, useClientsStore } from '../../lib/store';
 import DateTimeField from '../../components/DateTimeField';
+import SectionLabel from '../../components/SectionLabel';
+import SelectableChip from '../../components/SelectableChip';
+import TextField from '../../components/TextField';
+import PatientPicker from '../../components/PatientPicker';
 
 const toMinutes = (hhmm: string) => {
   const [h, m] = hhmm.slice(0, 5).split(':').map(Number);
@@ -134,34 +137,27 @@ export default function AddAppointmentScreen({ navigation, route }: Props) {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionLabel}>{t('appointments.selectClient')}</Text>
             {clients.length === 0 ? (
-              <Text style={styles.helperText}>{t('appointments.noClientsAvailable')}</Text>
+              <>
+                <SectionLabel>{t('appointments.selectClient')}</SectionLabel>
+                <Text style={styles.helperText}>{t('appointments.noClientsAvailable')}</Text>
+              </>
             ) : (
-              clients.map((client) => {
-                const isSelected = selectedClientId === client.id;
-                return (
-                  <TouchableOpacity
-                    key={client.id}
-                    style={[styles.clientChip, isSelected && styles.clientChipActive]}
-                    onPress={() => setSelectedClientId(client.id)}
-                  >
-                    <Text style={[styles.clientChipText, isSelected && styles.clientChipTextActive]}>
-                      {client.first_name} {client.last_name}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })
+              <PatientPicker
+                label={t('appointments.selectClient')}
+                clients={clients}
+                selectedClientId={selectedClientId}
+                onSelect={setSelectedClientId}
+              />
             )}
           </View>
 
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionLabel}>{t('appointments.dateTime')}</Text>
+            <SectionLabel>{t('appointments.dateTime')}</SectionLabel>
             <DateTimeField mode="date" value={date} onChange={setDate} label={t('common.date')} />
             <DateTimeField mode="time" value={startTime} onChange={setStartTime} label={t('common.time')} />
-            <Text style={styles.miniLabel}>{t('appointments.duration')}</Text>
-            <TextInput
-              style={styles.input}
+            <TextField
+              label={t('appointments.duration')}
               placeholder={t('appointments.duration')}
               value={duration}
               onChangeText={setDuration}
@@ -170,43 +166,43 @@ export default function AddAppointmentScreen({ navigation, route }: Props) {
           </View>
 
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionLabel}>{t('appointments.selectType')}</Text>
+            <SectionLabel>{t('appointments.selectType')}</SectionLabel>
             <View style={styles.chipRow}>
-              {TYPES.map((item) => {
-                const active = item === type;
-                return (
-                  <TouchableOpacity key={item} style={[styles.chip, active && styles.chipActive]} onPress={() => setType(item)}>
-                    <Text style={[styles.chipText, active && styles.chipTextActive]}>{t(`appointments.types.${item}`)}</Text>
-                  </TouchableOpacity>
-                );
-              })}
+              {TYPES.map((item) => (
+                <SelectableChip
+                  key={item}
+                  label={t(`appointments.types.${item}`)}
+                  selected={item === type}
+                  onPress={() => setType(item)}
+                  color={Colors.accent}
+                />
+              ))}
             </View>
           </View>
 
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionLabel}>{t('appointments.selectStatus')}</Text>
+            <SectionLabel>{t('appointments.selectStatus')}</SectionLabel>
             <View style={styles.chipRow}>
-              {STATUSES.map((item) => {
-                const active = item === status;
-                return (
-                  <TouchableOpacity key={item} style={[styles.chip, active && styles.chipActive]} onPress={() => setStatus(item)}>
-                    <Text style={[styles.chipText, active && styles.chipTextActive]}>{t(`appointments.statuses.${item}`)}</Text>
-                  </TouchableOpacity>
-                );
-              })}
+              {STATUSES.map((item) => (
+                <SelectableChip
+                  key={item}
+                  label={t(`appointments.statuses.${item}`)}
+                  selected={item === status}
+                  onPress={() => setStatus(item)}
+                  color={Colors.accent}
+                />
+              ))}
             </View>
           </View>
 
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionLabel}>{t('common.notes')}</Text>
-            <TextInput
-              style={[styles.input, styles.multiline]}
+            <TextField
+              label={t('common.notes')}
               placeholder={t('common.notes')}
               value={notes}
               onChangeText={setNotes}
               multiline
               numberOfLines={4}
-              textAlignVertical="top"
             />
           </View>
           <View style={{ height: TAB_BAR_CLEARANCE }} />
@@ -262,82 +258,13 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
     ...Shadow.sm,
   },
-  sectionLabel: {
-    fontSize: FontSize.sm,
-    fontWeight: '700',
-    color: Colors.primary,
-    marginBottom: Spacing.sm,
-  },
-  miniLabel: {
-    fontSize: FontSize.sm,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xs,
-  },
   helperText: {
     color: Colors.textMuted,
     fontSize: FontSize.sm,
-  },
-  clientChip: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.sm,
-    backgroundColor: Colors.inputBg,
-  },
-  clientChipActive: {
-    borderColor: Colors.accent,
-    backgroundColor: Colors.accentLight,
-  },
-  clientChipText: {
-    color: Colors.textPrimary,
-    fontWeight: '600',
-  },
-  clientChipTextActive: {
-    color: Colors.accent,
-  },
-  input: {
-    backgroundColor: Colors.inputBg,
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    fontSize: FontSize.md,
-    color: Colors.textPrimary,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  inputSpacing: {
-    marginTop: Spacing.sm,
-  },
-  multiline: {
-    height: 110,
-    paddingTop: Spacing.sm,
   },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.sm,
-  },
-  chip: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.inputBg,
-  },
-  chipActive: {
-    borderColor: Colors.accent,
-    backgroundColor: Colors.accentLight,
-  },
-  chipText: {
-    color: Colors.textMuted,
-    fontSize: FontSize.sm,
-    fontWeight: '600',
-  },
-  chipTextActive: {
-    color: Colors.accent,
   },
 });

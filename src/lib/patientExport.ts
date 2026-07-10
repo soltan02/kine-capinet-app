@@ -1,7 +1,5 @@
-import * as Print from 'expo-print';
-import * as Sharing from 'expo-sharing';
 import { supabase, Client } from './supabase';
-import { esc, table, PDF_STYLES } from './pdfHelpers';
+import { table, section, infoGrid, letterhead, footer, presentHtmlDocument, PDF_STYLES } from './pdfHelpers';
 
 // ─── Per-patient PDF export ───────────────────────────────────
 // Admin/kiné only (gated at the call site by `sessions:view`, same rule as
@@ -18,28 +16,24 @@ function buildPatientHtml(client: Client, appointments: any[], sessionLogs: any[
 <html><head><meta charset="utf-8">
 <style>${PDF_STYLES}</style></head>
 <body>
-  <h1>Kine Cabinet — Dossier patient</h1>
-  <div class="subtitle">${esc(fullName)} · Généré le ${esc(dateStr)}</div>
+  ${letterhead('Dossier patient', `${fullName} · Généré le ${dateStr}`)}
 
-  <h2>Informations patient</h2>
-  <div class="infoGrid">
-    <div><b>Téléphone :</b> ${esc(client.phone)}</div>
-    <div><b>CNAM :</b> ${esc(client.cnam_number)}</div>
-    <div><b>Diagnostic :</b> ${esc(client.diagnosis)}</div>
-    <div><b>Antécédents :</b> ${esc(client.medical_history)}</div>
-    <div><b>Contre-indications :</b> ${esc(client.contraindications)}</div>
-    <div><b>Objectifs de traitement :</b> ${esc(client.treatment_goals)}</div>
-    <div><b>Séances prescrites :</b> ${esc(client.sessions_prescribed)}</div>
-  </div>
+  ${section('Informations patient', infoGrid([
+    ['Téléphone', client.phone],
+    ['CNAM', client.cnam_number],
+    ['Séances prescrites', client.sessions_prescribed],
+    ['Diagnostic', client.diagnosis],
+    ['Antécédents médicaux', client.medical_history],
+    ['Contre-indications', client.contraindications],
+    ['Objectifs de traitement', client.treatment_goals],
+  ]))}
 
-  <h2>Rendez-vous (${appointments.length})</h2>
-  ${table(
+  ${section(`Rendez-vous (${appointments.length})`, table(
     ['Date', 'Heure', 'Type', 'Statut'],
     appointments.map((a) => [a.date, String(a.start_time || '').slice(0, 5), a.type, a.status])
-  )}
+  ))}
 
-  <h2>Notes de séance (${sessionLogs.length})</h2>
-  ${table(
+  ${section(`Notes de séance (${sessionLogs.length})`, table(
     ['Date', 'Douleur avant', 'Douleur après', 'Actes', 'Notes'],
     sessionLogs.map((s) => [
       String(s.started_at || '').slice(0, 10),
@@ -48,14 +42,14 @@ function buildPatientHtml(client: Client, appointments: any[], sessionLogs: any[
       [s.electrotherapy && 'Électrothérapie', s.manual_therapy && 'Thérapie manuelle', s.exercises && 'Exercices', s.stretching && 'Étirements'].filter(Boolean).join(', '),
       s.therapist_notes,
     ])
-  )}
+  ))}
 
-  ${payments ? `
-  <h2>Paiements (${payments.length})</h2>
-  ${table(
+  ${payments ? section(`Paiements (${payments.length})`, table(
     ['Date', 'Montant (TND)', 'Méthode', 'Statut', 'Réf. CNAM'],
     payments.map((p) => [String(p.paid_at || '').slice(0, 10), Number(p.amount).toFixed(3), p.payment_method, p.status, p.cnam_reference])
-  )}` : ''}
+  )) : ''}
+
+  ${footer()}
 </body></html>`;
 }
 
@@ -69,9 +63,5 @@ export async function exportPatientPdf(client: Client, includeBilling: boolean):
   ]);
 
   const html = buildPatientHtml(client, appointments || [], sessionLogs || [], includeBilling ? (paymentsResult.data || []) : null);
-  const { uri } = await Print.printToFileAsync({ html });
-
-  const canShare = await Sharing.isAvailableAsync();
-  if (!canShare) throw new Error('sharing_unavailable');
-  await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: `Kine Cabinet — ${client.first_name} ${client.last_name}` });
+  await presentHtmlDocument(html, `Kine Cabinet — ${client.first_name} ${client.last_name}`);
 }

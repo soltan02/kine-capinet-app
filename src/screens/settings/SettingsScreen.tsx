@@ -5,7 +5,6 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
   Platform,
 } from 'react-native';
 import { Alert } from '../../lib/alert';
@@ -19,6 +18,8 @@ import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, ThemeMod
 import { usePermissions } from '../../lib/permissions';
 import i18n from '../../lib/i18n';
 import ScreenHeader from '../../components/ScreenHeader';
+import SectionLabel from '../../components/SectionLabel';
+import Button from '../../components/Button';
 
 export default function SettingsScreen({ navigation }: { navigation: any }) {
   const { t } = useTranslation();
@@ -135,7 +136,7 @@ export default function SettingsScreen({ navigation }: { navigation: any }) {
         </View>
 
         {/* Language */}
-        <Text style={styles.sectionTitle}>{t('settings.language')}</Text>
+        <SectionLabel>{t('settings.language')}</SectionLabel>
         <View style={styles.card}>
           <View style={styles.langRow}>
             <TouchableOpacity
@@ -165,7 +166,7 @@ export default function SettingsScreen({ navigation }: { navigation: any }) {
         </View>
 
         {/* Appearance */}
-        <Text style={styles.sectionTitle}>{t('settings.appearance')}</Text>
+        <SectionLabel>{t('settings.appearance')}</SectionLabel>
         <View style={styles.card}>
           <View style={styles.langRow}>
             <TouchableOpacity
@@ -195,7 +196,7 @@ export default function SettingsScreen({ navigation }: { navigation: any }) {
         {/* Account */}
         {can('users:manage') && (
           <>
-            <Text style={styles.sectionTitle}>{t('settings.users')}</Text>
+            <SectionLabel>{t('settings.users')}</SectionLabel>
             <View style={styles.card}>
               <SettingRow
                 icon="people-outline"
@@ -221,7 +222,7 @@ export default function SettingsScreen({ navigation }: { navigation: any }) {
         )}
 
         {/* About */}
-        <Text style={styles.sectionTitle}>{t('settings.about')}</Text>
+        <SectionLabel>{t('settings.about')}</SectionLabel>
         <View style={styles.card}>
           <SettingRow
             icon="information-circle-outline"
@@ -231,18 +232,14 @@ export default function SettingsScreen({ navigation }: { navigation: any }) {
         </View>
 
         {/* Logout */}
-        <View style={[styles.card, styles.logoutCard]}>
-          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} disabled={loggingOut}>
-            {loggingOut ? (
-              <ActivityIndicator color={Colors.danger} />
-            ) : (
-              <>
-                <Ionicons name="log-out-outline" size={20} color={Colors.danger} />
-                <Text style={styles.logoutText}>{t('settings.logout')}</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
+        <Button
+          title={t('settings.logout')}
+          onPress={handleLogout}
+          loading={loggingOut}
+          variant="danger"
+          icon="log-out-outline"
+          style={{ marginTop: Spacing.lg }}
+        />
 
         <View style={{ height: TAB_BAR_CLEARANCE }} />
       </ScrollView>
@@ -306,15 +303,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.accentLight,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  sectionTitle: {
-    fontSize: FontSize.xs,
-    fontWeight: '800',
-    color: Colors.textMuted,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginBottom: Spacing.sm,
-    marginTop: Spacing.lg,
   },
   card: {
     backgroundColor: Colors.card,
@@ -384,23 +372,5 @@ const styles = StyleSheet.create({
     width: 1,
     backgroundColor: Colors.border,
     marginVertical: Spacing.sm,
-  },
-  logoutCard: {
-    marginTop: Spacing.lg,
-    borderWidth: 1.5,
-    borderColor: Colors.dangerLight,
-    backgroundColor: Colors.white,
-  },
-  logoutBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    padding: Spacing.lg,
-  },
-  logoutText: {
-    fontSize: FontSize.md,
-    fontWeight: '700',
-    color: Colors.danger,
   },
 });

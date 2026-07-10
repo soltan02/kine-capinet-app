@@ -18,6 +18,10 @@ import { supabase, PaymentMethod, PaymentStatus, Payment } from '../../lib/supab
 import { useAuthStore, useClientsStore } from '../../lib/store';
 import { usePermissions } from '../../lib/permissions';
 import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, TAB_BAR_CLEARANCE } from '../../constants/theme';
+import SectionLabel from '../../components/SectionLabel';
+import SelectableChip from '../../components/SelectableChip';
+import TextField from '../../components/TextField';
+import PatientPicker from '../../components/PatientPicker';
 
 interface Props {
   navigation: any;
@@ -135,26 +139,18 @@ export default function AddPaymentScreen({ navigation, route }: Props) {
           {/* Patient (only when not already implied by how this screen was opened) */}
           {needsClientPicker && (
             <View style={styles.sectionCard}>
-              <Text style={styles.sectionLabel}>{t('billing.selectClient')}</Text>
               {clients.length === 0 ? (
-                <Text style={styles.helperText}>{t('appointments.noClientsAvailable')}</Text>
+                <>
+                  <SectionLabel>{t('billing.selectClient')}</SectionLabel>
+                  <Text style={styles.helperText}>{t('appointments.noClientsAvailable')}</Text>
+                </>
               ) : (
-                <View style={styles.clientList}>
-                  {clients.map((client) => {
-                    const isSelected = selectedClientId === client.id;
-                    return (
-                      <TouchableOpacity
-                        key={client.id}
-                        style={[styles.clientChip, isSelected && styles.clientChipActive]}
-                        onPress={() => setSelectedClientId(client.id)}
-                      >
-                        <Text style={[styles.clientChipText, isSelected && styles.clientChipTextActive]}>
-                          {client.first_name} {client.last_name}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
+                <PatientPicker
+                  label={t('billing.selectClient')}
+                  clients={clients}
+                  selectedClientId={selectedClientId}
+                  onSelect={setSelectedClientId}
+                />
               )}
             </View>
           )}
@@ -177,7 +173,7 @@ export default function AddPaymentScreen({ navigation, route }: Props) {
 
           {/* Payment method */}
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionLabel}>{t('billing.paymentMethod')}</Text>
+            <SectionLabel>{t('billing.paymentMethod')}</SectionLabel>
             <View style={styles.methodGrid}>
               {METHODS.map(({ key, icon, color }) => (
                 <TouchableOpacity
@@ -198,12 +194,10 @@ export default function AddPaymentScreen({ navigation, route }: Props) {
 
             {/* CNAM reference */}
             {method === 'cnam' && (
-              <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>{t('billing.cnamReference')}</Text>
-                <TextInput
-                  style={styles.input}
+              <View style={{ marginTop: Spacing.md }}>
+                <TextField
+                  label={t('billing.cnamReference')}
                   placeholder={t('billing.cnamRefPlaceholder')}
-                  placeholderTextColor={Colors.textMuted}
                   value={cnamRef}
                   onChangeText={setCnamRef}
                 />
@@ -213,21 +207,18 @@ export default function AddPaymentScreen({ navigation, route }: Props) {
 
           {/* Status */}
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionLabel}>{t('billing.paymentStatus')}</Text>
+            <SectionLabel>{t('billing.paymentStatus')}</SectionLabel>
             <View style={styles.statusRow}>
               {STATUSES.map((s) => {
-                const isActive = status === s;
                 const color = s === 'paid' ? Colors.success : s === 'pending' ? Colors.warning : s === 'partial' ? Colors.accent : Colors.textMuted;
                 return (
-                  <TouchableOpacity
+                  <SelectableChip
                     key={s}
-                    style={[styles.statusChip, isActive && { backgroundColor: color + '18', borderColor: color }]}
+                    label={t(`billing.statuses.${s}`)}
+                    selected={status === s}
                     onPress={() => setStatus(s)}
-                  >
-                    <Text style={[styles.statusChipText, isActive && { color }]}>
-                      {t(`billing.statuses.${s}`)}
-                    </Text>
-                  </TouchableOpacity>
+                    color={color}
+                  />
                 );
               })}
             </View>
@@ -235,18 +226,16 @@ export default function AddPaymentScreen({ navigation, route }: Props) {
 
           {/* Package / plan */}
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionLabel}>{t('billing.packageSection')}</Text>
-            <TextInput
-              style={styles.input}
+            <SectionLabel>{t('billing.packageSection')}</SectionLabel>
+            <TextField
+              label={t('billing.packageSection')}
               placeholder={t('billing.packageNamePlaceholder')}
-              placeholderTextColor={Colors.textMuted}
               value={packageName}
               onChangeText={setPackageName}
             />
-            <TextInput
-              style={[styles.input, { marginTop: Spacing.sm }]}
+            <TextField
+              label={t('billing.packageSessionsLabel')}
               placeholder={t('billing.packageSessionsPlaceholder')}
-              placeholderTextColor={Colors.textMuted}
               value={packageSessions}
               onChangeText={setPackageSessions}
               keyboardType="numeric"
@@ -255,16 +244,13 @@ export default function AddPaymentScreen({ navigation, route }: Props) {
 
           {/* Notes */}
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionLabel}>{t('common.notes')}</Text>
-            <TextInput
-              style={[styles.input, styles.multiline]}
+            <TextField
+              label={t('common.notes')}
               placeholder={t('common.notes')}
-              placeholderTextColor={Colors.textMuted}
               value={notes}
               onChangeText={setNotes}
               multiline
               numberOfLines={3}
-              textAlignVertical="top"
             />
           </View>
 
@@ -352,42 +338,9 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
     ...Shadow.sm,
   },
-  sectionLabel: {
-    fontSize: FontSize.xs,
-    fontWeight: '800',
-    color: Colors.primary,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: Spacing.md,
-  },
   helperText: {
     color: Colors.textMuted,
     fontSize: FontSize.sm,
-  },
-  clientList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-  },
-  clientChip: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    backgroundColor: Colors.inputBg,
-  },
-  clientChipActive: {
-    borderColor: Colors.accent,
-    backgroundColor: Colors.accentLight,
-  },
-  clientChipText: {
-    color: Colors.textPrimary,
-    fontWeight: '600',
-    fontSize: FontSize.sm,
-  },
-  clientChipTextActive: {
-    color: Colors.accent,
   },
   methodGrid: {
     flexDirection: 'row',
@@ -423,42 +376,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.sm,
-  },
-  statusChip: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    backgroundColor: Colors.inputBg,
-  },
-  statusChipText: {
-    fontSize: FontSize.sm,
-    fontWeight: '600',
-    color: Colors.textMuted,
-  },
-  fieldGroup: {
-    marginTop: Spacing.md,
-  },
-  fieldLabel: {
-    fontSize: FontSize.sm,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xs,
-  },
-  input: {
-    backgroundColor: Colors.inputBg,
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    fontSize: FontSize.md,
-    color: Colors.textPrimary,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    height: 48,
-  },
-  multiline: {
-    height: 88,
-    paddingTop: Spacing.sm,
   },
 });
