@@ -1,5 +1,5 @@
 import { supabase, Client } from './supabase';
-import { table, section, infoGrid, letterhead, footer, presentHtmlDocument, openPrintWindow, PDF_STYLES } from './pdfHelpers';
+import { table, section, infoGrid, letterhead, footer, presentHtmlDocument, openPrintWindow, closePrintWindow, PDF_STYLES } from './pdfHelpers';
 
 // ─── Per-patient PDF export ───────────────────────────────────
 // Admin/kiné only (gated at the call site by `sessions:view`, same rule as
@@ -54,7 +54,6 @@ function buildPatientHtml(client: Client, appointments: any[], sessionLogs: any[
 }
 
 export async function exportPatientPdf(client: Client, includeBilling: boolean): Promise<void> {
-  // Must happen before any await — see openPrintWindow's doc comment.
   const printWindow = openPrintWindow();
 
   try {
@@ -69,7 +68,7 @@ export async function exportPatientPdf(client: Client, includeBilling: boolean):
     const html = buildPatientHtml(client, appointments || [], sessionLogs || [], includeBilling ? (paymentsResult.data || []) : null);
     await presentHtmlDocument(html, `Cabinet Azzabi Farouk — ${client.first_name} ${client.last_name}`, printWindow);
   } catch (e) {
-    printWindow?.close();
+    closePrintWindow(printWindow);
     throw e;
   }
 }

@@ -18,7 +18,7 @@ import { supabase, Client, Appointment, Payment, SessionLog, ClientAttachment } 
 import { useClientsStore } from '../../lib/store';
 import { usePermissions } from '../../lib/permissions';
 import { useResponsive } from '../../hooks/useResponsive';
-import { openDocument } from '../../lib/documents';
+import { openDocument, getDocumentUrl } from '../../lib/documents';
 import { exportPatientPdf } from '../../lib/patientExport';
 import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, TAB_BAR_CLEARANCE } from '../../constants/theme';
 import i18n from '../../lib/i18n';
@@ -28,6 +28,7 @@ import { getStatusColor } from '../../components/StatusBadge';
 import ProgressTimeline from '../../components/ProgressTimeline';
 import { SkeletonList } from '../../components/Skeleton';
 import Button from '../../components/Button';
+import DocumentViewerModal from '../../components/DocumentViewerModal';
 
 const TABS = ['info', 'appointments', 'sessions', 'progress', 'billing'] as const;
 type Tab = typeof TABS[number];
@@ -56,6 +57,8 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
   const visibleTabs = canViewBilling ? TABS : TABS.filter((tab) => tab !== 'billing');
   const [exporting, setExporting] = useState(false);
   const [showExportChoice, setShowExportChoice] = useState(false);
+  const [viewerAtt, setViewerAtt] = useState<ClientAttachment | null>(null);
+  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
   const { isDesktop } = useResponsive();
 
   // On web, a 3-button Alert.alert falls back to window.confirm(), which
@@ -89,19 +92,35 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
     setExporting(true);
     try {
       await exportPatientPdf(client, includeBilling);
-    } catch (e: any) {
-      const isPopupBlocked = e?.message === 'popup_blocked';
-      Alert.alert(t('common.error'), isPopupBlocked ? t('clients.popupBlocked') : t('clients.exportFailed'));
+    } catch {
+      Alert.alert(t('common.error'), t('clients.exportFailed'));
     }
     setExporting(false);
   };
 
+  // On web, viewing goes through an in-app preview instead of a new
+  // window.open() tab — some browser extensions block window.open()
+  // outright regardless of the site's own pop-up permission, and there's
+  // no site-level fix for that. Native keeps the external-viewer flow via
+  // openDocument()/Linking, which isn't affected by any of this.
   const openDoc = async (att: ClientAttachment) => {
+    if (Platform.OS === 'web') {
+      setViewerAtt(att);
+      setViewerUrl(null);
+      try {
+        const url = att.path ? await getDocumentUrl(att.path) : att.url || null;
+        if (!url) throw new Error('no_url');
+        setViewerUrl(url);
+      } catch {
+        setViewerAtt(null);
+        Alert.alert(t('common.error'), t('clients.openFailed'));
+      }
+      return;
+    }
     try {
       await openDocument(att);
-    } catch (e: any) {
-      const isPopupBlocked = e?.message === 'popup_blocked';
-      Alert.alert(t('common.error'), isPopupBlocked ? t('clients.popupBlocked') : t('clients.openFailed'));
+    } catch {
+      Alert.alert(t('common.error'), t('clients.openFailed'));
     }
   };
 
@@ -489,6 +508,13 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
           </View>
         </View>
       </Modal>
+
+      <DocumentViewerModal
+        visible={!!viewerAtt}
+        url={viewerUrl}
+        mime={viewerAtt?.mime}
+        onClose={() => { setViewerAtt(null); setViewerUrl(null); }}
+      />
     </SafeAreaView>
   );
 }

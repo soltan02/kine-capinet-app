@@ -68,35 +68,54 @@ export function footer(): string {
 // without this branch, "exporting" would print the live app UI, not the
 // generated dossier. Same story for expo-sharing: navigator.share is
 // usually unavailable on desktop browsers, so shareAsync() throws right
-// after. Instead, open the generated HTML in its own window and print
-// that window specifically; the browser's own "Save as PDF" destination
-// in the print dialog is the web equivalent of sharing here.
+// after.
 //
-// The window MUST be opened synchronously, in the same tick as the user's
-// click — the caller fetches data (appointments, session logs, ...) with
-// an `await` before the HTML is ready, and by the time that resolves the
-// browser no longer considers it a user gesture, so a same-function
-// window.open() gets silently blocked (no window, no error). Call
-// openPrintWindow() as the very first line of the click handler instead,
-// then pass its result in here once the HTML is built.
-export function openPrintWindow(): Window | null {
-  return Platform.OS === 'web' ? window.open('', '_blank') : null;
+// Printing used to go through a new window.open() tab, but that's at the
+// mercy of the browser's popup blocker AND any ad/privacy extension that
+// hooks window.open() specifically — some users hit this even after
+// explicitly allowing pop-ups for the site (extension-level blocks don't
+// show up as a site permission at all). A hidden same-page <iframe> sidesteps
+// this entirely: it never opens a new browsing context, so there is nothing
+// for a popup blocker to intercept, and window.print() itself has no
+// user-gesture requirement (unlike window.open()), so it also works
+// regardless of any async gap before it's called.
+export function openPrintWindow(): HTMLIFrameElement | null {
+  if (Platform.OS !== 'web') return null;
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+  return iframe;
 }
 
-export async function presentHtmlDocument(html: string, dialogTitle: string, preOpenedWindow?: Window | null): Promise<void> {
+/** Detaches the hidden print iframe — call on error before a print ever happens. */
+export function closePrintWindow(target: HTMLIFrameElement | null | undefined): void {
+  target?.remove();
+}
+
+export async function presentHtmlDocument(html: string, dialogTitle: string, preOpenedWindow?: HTMLIFrameElement | null): Promise<void> {
   if (Platform.OS === 'web') {
-    const printWindow = preOpenedWindow !== undefined ? preOpenedWindow : window.open('', '_blank');
-    if (!printWindow) throw new Error('popup_blocked');
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
-    printWindow.document.title = dialogTitle;
-    printWindow.focus();
+    const iframe = preOpenedWindow !== undefined ? preOpenedWindow : openPrintWindow();
+    const frameWindow = iframe?.contentWindow;
+    if (!iframe || !frameWindow) throw new Error('print_unavailable');
+    const doc = frameWindow.document;
+    doc.open();
+    doc.write(html);
+    doc.close();
+    doc.title = dialogTitle;
     // Let the new document (and its @page/table layout) finish painting
     // before invoking print — printing immediately on write() can catch
     // an empty or partially-laid-out page in some browsers.
     await new Promise((resolve) => setTimeout(resolve, 300));
-    printWindow.print();
+    frameWindow.focus();
+    frameWindow.print();
+    // Give the print dialog time to pick up the frame's content before we
+    // tear it down.
+    setTimeout(() => iframe.remove(), 10000);
     return;
   }
 

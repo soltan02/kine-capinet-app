@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { table, section, letterhead, footer, presentHtmlDocument, openPrintWindow, PDF_STYLES } from './pdfHelpers';
+import { table, section, letterhead, footer, presentHtmlDocument, openPrintWindow, closePrintWindow, PDF_STYLES } from './pdfHelpers';
 
 // ─── Admin data export / automated backups ───────────────────
 // Snapshots are created server-side (weekly cron + this on-demand RPC),
@@ -69,11 +69,7 @@ function buildBackupHtml(payload: any, dateStr: string): string {
 </body></html>`;
 }
 
-export async function shareBackup(id: string, preOpenedWindow?: Window | null): Promise<void> {
-  // Must happen before any await — see openPrintWindow's doc comment.
-  // Callers that do their own async work before calling shareBackup (e.g.
-  // creating the backup first) must open the window themselves and pass
-  // it in via preOpenedWindow instead of relying on this fallback.
+export async function shareBackup(id: string, preOpenedWindow?: HTMLIFrameElement | null): Promise<void> {
   const printWindow = preOpenedWindow !== undefined ? preOpenedWindow : openPrintWindow();
 
   try {
@@ -88,7 +84,7 @@ export async function shareBackup(id: string, preOpenedWindow?: Window | null): 
     const html = buildBackupHtml(data.payload, dateStr);
     await presentHtmlDocument(html, 'Cabinet Azzabi Farouk — sauvegarde', printWindow);
   } catch (e) {
-    printWindow?.close();
+    closePrintWindow(printWindow);
     throw e;
   }
 }

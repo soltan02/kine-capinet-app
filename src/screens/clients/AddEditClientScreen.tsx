@@ -19,10 +19,11 @@ import DateTimeField from '../../components/DateTimeField';
 import { Client, ClientAttachment } from '../../lib/supabase';
 import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, TAB_BAR_CLEARANCE } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
-import { pickDocument, pickImage, uploadClientDocument, openDocument, deleteClientDocument, PickedFile } from '../../lib/documents';
+import { pickDocument, pickImage, uploadClientDocument, openDocument, getDocumentUrl, deleteClientDocument, PickedFile } from '../../lib/documents';
 import SectionLabel from '../../components/SectionLabel';
 import SelectableChip from '../../components/SelectableChip';
 import TextField from '../../components/TextField';
+import DocumentViewerModal from '../../components/DocumentViewerModal';
 
 interface Props {
   navigation: any;
@@ -60,6 +61,8 @@ export default function AddEditClientScreen({ navigation, route }: Props) {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string>>>({});
+  const [viewerAtt, setViewerAtt] = useState<ClientAttachment | null>(null);
+  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
 
   const setField = (key: keyof typeof form, value: any) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -101,12 +104,27 @@ export default function AddEditClientScreen({ navigation, route }: Props) {
     ]);
   };
 
+  // On web, use an in-app preview instead of window.open() — see
+  // ClientDetailScreen's openDoc for why (extension-level popup blocks
+  // that no site permission can fix). Native keeps the external viewer.
   const handleOpenDoc = async (att: ClientAttachment) => {
+    if (Platform.OS === 'web') {
+      setViewerAtt(att);
+      setViewerUrl(null);
+      try {
+        const url = att.path ? await getDocumentUrl(att.path) : att.url || null;
+        if (!url) throw new Error('no_url');
+        setViewerUrl(url);
+      } catch {
+        setViewerAtt(null);
+        Alert.alert(t('common.error'), t('clients.openFailed'));
+      }
+      return;
+    }
     try {
       await openDocument(att);
-    } catch (e: any) {
-      const isPopupBlocked = e?.message === 'popup_blocked';
-      Alert.alert(t('common.error'), isPopupBlocked ? t('clients.popupBlocked') : t('clients.openFailed'));
+    } catch {
+      Alert.alert(t('common.error'), t('clients.openFailed'));
     }
   };
 
@@ -324,6 +342,13 @@ export default function AddEditClientScreen({ navigation, route }: Props) {
           <View style={{ height: TAB_BAR_CLEARANCE }} />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <DocumentViewerModal
+        visible={!!viewerAtt}
+        url={viewerUrl}
+        mime={viewerAtt?.mime}
+        onClose={() => { setViewerAtt(null); setViewerUrl(null); }}
+      />
     </SafeAreaView>
   );
 }
