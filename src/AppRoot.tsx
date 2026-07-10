@@ -1,9 +1,10 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Updates from 'expo-updates';
 import { supabase, hasBackendConfig } from './lib/supabase';
 import { loadStoredClinicConfig } from './lib/clinicConfig';
 import { useAuthStore } from './lib/store';
@@ -170,6 +171,35 @@ export default function AppRoot() {
         ]
       );
     });
+    return () => { mounted = false; };
+  }, [accountId]);
+
+  // OTA (EAS Update) check — JS-only fixes ship this way without a new APK.
+  // expo-updates only downloads in the background; it does NOT apply until
+  // the next cold start on its own, so without this the fix would silently
+  // sit there until the user happens to fully close and reopen the app
+  // twice. Prompt to reload immediately instead, once per session.
+  useEffect(() => {
+    if (!accountId || Platform.OS === 'web') return;
+    let mounted = true;
+    (async () => {
+      try {
+        const check = await Updates.checkForUpdateAsync();
+        if (!check.isAvailable || !mounted) return;
+        await Updates.fetchUpdateAsync();
+        if (!mounted) return;
+        Alert.alert(
+          'Mise à jour prête',
+          'Une mise à jour est téléchargée et prête à être appliquée.',
+          [
+            { text: 'Plus tard', style: 'cancel' },
+            { text: 'Redémarrer maintenant', onPress: () => Updates.reloadAsync() },
+          ]
+        );
+      } catch {
+        // Not available in this runtime (Expo Go / dev client) or offline — silent no-op.
+      }
+    })();
     return () => { mounted = false; };
   }, [accountId]);
 
