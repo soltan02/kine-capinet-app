@@ -104,8 +104,9 @@ export default function AddEditClientScreen({ navigation, route }: Props) {
   const handleOpenDoc = async (att: ClientAttachment) => {
     try {
       await openDocument(att);
-    } catch {
-      Alert.alert(t('common.error'), t('clients.openFailed'));
+    } catch (e: any) {
+      const isPopupBlocked = e?.message === 'popup_blocked';
+      Alert.alert(t('common.error'), isPopupBlocked ? t('clients.popupBlocked') : t('clients.openFailed'));
     }
   };
 

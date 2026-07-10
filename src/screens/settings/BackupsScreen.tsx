@@ -54,7 +54,7 @@ export default function BackupsScreen({ navigation }: { navigation: any }) {
       await shareBackup(id, printWindow);
     } catch (e: any) {
       printWindow?.close();
-      Alert.alert(t('common.error'), t('backups.exportFailed'));
+      Alert.alert(t('common.error'), e?.message === 'popup_blocked' ? t('clients.popupBlocked') : t('backups.exportFailed'));
     }
     setExporting(false);
   };
@@ -64,7 +64,7 @@ export default function BackupsScreen({ navigation }: { navigation: any }) {
     try {
       await shareBackup(id);
     } catch (e: any) {
-      Alert.alert(t('common.error'), t('backups.exportFailed'));
+      Alert.alert(t('common.error'), e?.message === 'popup_blocked' ? t('clients.popupBlocked') : t('backups.exportFailed'));
     }
     setSharingId(null);
   };

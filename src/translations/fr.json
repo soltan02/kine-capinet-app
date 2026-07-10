@@ -117,6 +117,7 @@
     "uploading": "Téléversement en cours…",
     "uploadFailed": "Échec du téléversement du document",
     "openFailed": "Impossible d'ouvrir le document",
+    "popupBlocked": "Votre navigateur a bloqué la fenêtre d'ouverture. Cliquez sur l'icône de blocage de pop-up dans la barre d'adresse (ou Paramètres du site → Pop-ups et redirections) et choisissez \"Autoriser\" pour ce site, puis réessayez.",
     "permissionDenied": "Autorisation refusée (photos/appareil photo)",
     "exportFile": "Exporter le dossier",
     "exportWithoutBilling": "Exporter sans facturation",

@@ -89,8 +89,9 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
     setExporting(true);
     try {
       await exportPatientPdf(client, includeBilling);
-    } catch {
-      Alert.alert(t('common.error'), t('clients.exportFailed'));
+    } catch (e: any) {
+      const isPopupBlocked = e?.message === 'popup_blocked';
+      Alert.alert(t('common.error'), isPopupBlocked ? t('clients.popupBlocked') : t('clients.exportFailed'));
     }
     setExporting(false);
   };
@@ -98,8 +99,9 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
   const openDoc = async (att: ClientAttachment) => {
     try {
       await openDocument(att);
-    } catch {
-      Alert.alert(t('common.error'), t('clients.openFailed'));
+    } catch (e: any) {
+      const isPopupBlocked = e?.message === 'popup_blocked';
+      Alert.alert(t('common.error'), isPopupBlocked ? t('clients.popupBlocked') : t('clients.openFailed'));
     }
   };
 
