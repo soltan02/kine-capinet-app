@@ -1,5 +1,5 @@
 {
-  "latestVersion": "1.7.0",
+  "latestVersion": "1.7.1",
   "apkUrl": "https://expo.dev/accounts/soltan0102/projects/kine-cabinet-app/builds",
-  "notes": "Version bureau optimisée (barre latérale, mise en page multi-colonnes), rappels de séances avec notification en temps réel, patients et rendez-vous côte à côte sur grand écran."
+  "notes": "Cloche de notifications avec rappels de séances en temps réel."
 }
