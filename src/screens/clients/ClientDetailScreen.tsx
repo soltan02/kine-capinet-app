@@ -6,7 +6,6 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import { Linking } from 'react-native';
 import { Alert } from '../../lib/alert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +15,7 @@ import { fr, arDZ } from 'date-fns/locale';
 import { supabase, Client, Appointment, Payment, SessionLog, ClientAttachment } from '../../lib/supabase';
 import { useClientsStore } from '../../lib/store';
 import { usePermissions } from '../../lib/permissions';
-import { getDocumentUrl } from '../../lib/documents';
+import { openDocument } from '../../lib/documents';
 import { exportPatientPdf } from '../../lib/patientExport';
 import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, TAB_BAR_CLEARANCE } from '../../constants/theme';
 import i18n from '../../lib/i18n';
@@ -79,8 +78,7 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
 
   const openDoc = async (att: ClientAttachment) => {
     try {
-      const url = att.path ? await getDocumentUrl(att.path) : att.url;
-      if (url) await Linking.openURL(url);
+      await openDocument(att);
     } catch {
       Alert.alert(t('common.error'), t('clients.openFailed'));
     }

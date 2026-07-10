@@ -54,7 +54,11 @@ CREATE TABLE IF NOT EXISTS appointments (
   date DATE NOT NULL,
   start_time TIME NOT NULL,
   duration_minutes INT NOT NULL DEFAULT 45,
-  type TEXT NOT NULL DEFAULT 'session' CHECK (type IN ('initial', 'session', 'assessment', 'discharge')),
+  type TEXT NOT NULL DEFAULT 'session' CHECK (type IN (
+    'initial', 'session', 'assessment', 'discharge',
+    'fracture_surgery', 'joint_muscle_pain', 'acupuncture', 'cupping',
+    'leech_therapy', 'bloodletting', 'relaxation_massage'
+  )),
   status TEXT NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'confirmed', 'completed', 'cancelled', 'no_show')),
   notes TEXT,
   created_by UUID REFERENCES profiles(id),

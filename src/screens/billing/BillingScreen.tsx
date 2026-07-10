@@ -402,21 +402,6 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     color: Colors.textMuted,
   },
-  exportBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: Colors.accentLight,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: BorderRadius.full,
-    marginTop: 4,
-  },
-  exportText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: Colors.accent,
-  },
   statusDot: {
     paddingHorizontal: 6,
     paddingVertical: 2,

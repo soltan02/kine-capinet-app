@@ -8,7 +8,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Linking,
 } from 'react-native';
 import { Alert } from '../../lib/alert';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,7 +19,7 @@ import DateTimeField from '../../components/DateTimeField';
 import { Client, ClientAttachment } from '../../lib/supabase';
 import { Colors, FontSize, Spacing, BorderRadius, Shadow, CommonStyles, TAB_BAR_CLEARANCE } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
-import { pickDocument, pickImage, uploadClientDocument, getDocumentUrl, deleteClientDocument, PickedFile } from '../../lib/documents';
+import { pickDocument, pickImage, uploadClientDocument, openDocument, deleteClientDocument, PickedFile } from '../../lib/documents';
 import SectionLabel from '../../components/SectionLabel';
 import SelectableChip from '../../components/SelectableChip';
 import TextField from '../../components/TextField';
@@ -104,8 +103,7 @@ export default function AddEditClientScreen({ navigation, route }: Props) {
 
   const handleOpenDoc = async (att: ClientAttachment) => {
     try {
-      const url = att.path ? await getDocumentUrl(att.path) : att.url;
-      if (url) await Linking.openURL(url);
+      await openDocument(att);
     } catch {
       Alert.alert(t('common.error'), t('clients.openFailed'));
     }

@@ -71,9 +71,21 @@ export function footer(): string {
 // after. Instead, open the generated HTML in its own window and print
 // that window specifically; the browser's own "Save as PDF" destination
 // in the print dialog is the web equivalent of sharing here.
-export async function presentHtmlDocument(html: string, dialogTitle: string): Promise<void> {
+//
+// The window MUST be opened synchronously, in the same tick as the user's
+// click — the caller fetches data (appointments, session logs, ...) with
+// an `await` before the HTML is ready, and by the time that resolves the
+// browser no longer considers it a user gesture, so a same-function
+// window.open() gets silently blocked (no window, no error). Call
+// openPrintWindow() as the very first line of the click handler instead,
+// then pass its result in here once the HTML is built.
+export function openPrintWindow(): Window | null {
+  return Platform.OS === 'web' ? window.open('', '_blank') : null;
+}
+
+export async function presentHtmlDocument(html: string, dialogTitle: string, preOpenedWindow?: Window | null): Promise<void> {
   if (Platform.OS === 'web') {
-    const printWindow = window.open('', '_blank');
+    const printWindow = preOpenedWindow !== undefined ? preOpenedWindow : window.open('', '_blank');
     if (!printWindow) throw new Error('popup_blocked');
     printWindow.document.open();
     printWindow.document.write(html);

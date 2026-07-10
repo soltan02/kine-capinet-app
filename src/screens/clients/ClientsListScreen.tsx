@@ -277,15 +277,4 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: Colors.accent,
   },
-  inactiveBadge: {
-    backgroundColor: Colors.dangerLight,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  inactiveBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: Colors.danger,
-  },
 });

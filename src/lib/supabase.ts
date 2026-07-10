@@ -84,7 +84,21 @@ export type Client = {
 };
 
 export type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
-export type AppointmentType = 'initial' | 'session' | 'assessment' | 'discharge';
+// 'initial'/'session'/'assessment'/'discharge' are kept for backward
+// compatibility with existing records; the booking picker only offers the
+// clinic's actual services (fracture_surgery..relaxation_massage below).
+export type AppointmentType =
+  | 'initial'
+  | 'session'
+  | 'assessment'
+  | 'discharge'
+  | 'fracture_surgery'
+  | 'joint_muscle_pain'
+  | 'acupuncture'
+  | 'cupping'
+  | 'leech_therapy'
+  | 'bloodletting'
+  | 'relaxation_massage';
 
 export type Appointment = {
   id: string;

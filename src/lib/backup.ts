@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { table, section, letterhead, footer, presentHtmlDocument, PDF_STYLES } from './pdfHelpers';
+import { table, section, letterhead, footer, presentHtmlDocument, openPrintWindow, PDF_STYLES } from './pdfHelpers';
 
 // ─── Admin data export / automated backups ───────────────────
 // Snapshots are created server-side (weekly cron + this on-demand RPC),
@@ -70,14 +70,22 @@ function buildBackupHtml(payload: any, dateStr: string): string {
 }
 
 export async function shareBackup(id: string): Promise<void> {
-  const { data, error } = await supabase
-    .from('data_backups')
-    .select('payload, created_at')
-    .eq('id', id)
-    .single();
-  if (error || !data) throw error || new Error('backup_not_found');
+  // Must happen before any await — see openPrintWindow's doc comment.
+  const printWindow = openPrintWindow();
 
-  const dateStr = String(data.created_at).slice(0, 10);
-  const html = buildBackupHtml(data.payload, dateStr);
-  await presentHtmlDocument(html, 'Cabinet Azzabi Farouk — sauvegarde');
+  try {
+    const { data, error } = await supabase
+      .from('data_backups')
+      .select('payload, created_at')
+      .eq('id', id)
+      .single();
+    if (error || !data) throw error || new Error('backup_not_found');
+
+    const dateStr = String(data.created_at).slice(0, 10);
+    const html = buildBackupHtml(data.payload, dateStr);
+    await presentHtmlDocument(html, 'Cabinet Azzabi Farouk — sauvegarde', printWindow);
+  } catch (e) {
+    printWindow?.close();
+    throw e;
+  }
 }

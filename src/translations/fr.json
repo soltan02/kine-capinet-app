@@ -166,7 +166,14 @@
       "initial": "Bilan initial",
       "session": "Séance",
       "assessment": "Évaluation",
-      "discharge": "Sortie"
+      "discharge": "Sortie",
+      "fracture_surgery": "Rééducation post-fracture/chirurgie",
+      "joint_muscle_pain": "Douleurs articulaires et musculaires",
+      "acupuncture": "Acupuncture chinoise",
+      "cupping": "Hijama (ventouses médicales)",
+      "leech_therapy": "Hirudothérapie (sangsues)",
+      "bloodletting": "Saignée chinoise",
+      "relaxation_massage": "Massage de relaxation"
     },
     "statuses": {
       "scheduled": "Programmé",

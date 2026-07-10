@@ -1,5 +1,5 @@
 {
-  "latestVersion": "1.7.1",
+  "latestVersion": "1.7.2",
   "apkUrl": "https://expo.dev/accounts/soltan0102/projects/kine-cabinet-app/builds",
-  "notes": "Cloche de notifications avec rappels de séances en temps réel."
+  "notes": "Types de séances du cabinet (acupuncture, hijama, hirudothérapie, massage...), correctifs d'ouverture des documents et d'export de dossier sur le web, cloche de rappels de séances."
 }

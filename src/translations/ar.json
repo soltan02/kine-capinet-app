@@ -166,7 +166,14 @@
       "initial": "تقييم أولي",
       "session": "جلسة",
       "assessment": "تقييم",
-      "discharge": "خروج"
+      "discharge": "خروج",
+      "fracture_surgery": "علاج مخلفات الكسور و الجراحة",
+      "joint_muscle_pain": "آلام المفاصل و العضلات",
+      "acupuncture": "وخز بالإبر الصيني",
+      "cupping": "الحجامة الطبية",
+      "leech_therapy": "العلق الطبي",
+      "bloodletting": "الإدماء الصيني",
+      "relaxation_massage": "مساج الإسترخاء"
     },
     "statuses": {
       "scheduled": "مجدول",

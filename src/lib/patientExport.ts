@@ -1,5 +1,5 @@
 import { supabase, Client } from './supabase';
-import { table, section, infoGrid, letterhead, footer, presentHtmlDocument, PDF_STYLES } from './pdfHelpers';
+import { table, section, infoGrid, letterhead, footer, presentHtmlDocument, openPrintWindow, PDF_STYLES } from './pdfHelpers';
 
 // ─── Per-patient PDF export ───────────────────────────────────
 // Admin/kiné only (gated at the call site by `sessions:view`, same rule as
@@ -54,14 +54,22 @@ function buildPatientHtml(client: Client, appointments: any[], sessionLogs: any[
 }
 
 export async function exportPatientPdf(client: Client, includeBilling: boolean): Promise<void> {
-  const [{ data: appointments }, { data: sessionLogs }, paymentsResult] = await Promise.all([
-    supabase.from('appointments').select('*').eq('client_id', client.id).order('date', { ascending: false }),
-    supabase.from('session_logs').select('*').eq('client_id', client.id).order('started_at', { ascending: false }),
-    includeBilling
-      ? supabase.from('payments').select('*').eq('client_id', client.id).order('paid_at', { ascending: false })
-      : Promise.resolve({ data: null }),
-  ]);
+  // Must happen before any await — see openPrintWindow's doc comment.
+  const printWindow = openPrintWindow();
 
-  const html = buildPatientHtml(client, appointments || [], sessionLogs || [], includeBilling ? (paymentsResult.data || []) : null);
-  await presentHtmlDocument(html, `Cabinet Azzabi Farouk — ${client.first_name} ${client.last_name}`);
+  try {
+    const [{ data: appointments }, { data: sessionLogs }, paymentsResult] = await Promise.all([
+      supabase.from('appointments').select('*').eq('client_id', client.id).order('date', { ascending: false }),
+      supabase.from('session_logs').select('*').eq('client_id', client.id).order('started_at', { ascending: false }),
+      includeBilling
+        ? supabase.from('payments').select('*').eq('client_id', client.id).order('paid_at', { ascending: false })
+        : Promise.resolve({ data: null }),
+    ]);
+
+    const html = buildPatientHtml(client, appointments || [], sessionLogs || [], includeBilling ? (paymentsResult.data || []) : null);
+    await presentHtmlDocument(html, `Cabinet Azzabi Farouk — ${client.first_name} ${client.last_name}`, printWindow);
+  } catch (e) {
+    printWindow?.close();
+    throw e;
+  }
 }

@@ -1,3 +1,4 @@
+import { Platform, Linking } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { readAsStringAsync, EncodingType } from 'expo-file-system/legacy';
@@ -75,6 +76,33 @@ export async function getDocumentUrl(path: string): Promise<string> {
   const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(path, 3600);
   if (error || !data?.signedUrl) throw error || new Error('signed_url_failed');
   return data.signedUrl;
+}
+
+/** Open a stored (or legacy externally-linked) document/photo.
+ *
+ * On web, opening a signed URL requires fetching it first (createSignedUrl
+ * is a network round-trip) and only then calling window.open — but by the
+ * time that await resolves, the browser no longer considers it a direct
+ * user gesture, so the popup gets silently blocked (no window, no error).
+ * The fix is the standard one: open a blank tab synchronously, in the same
+ * tick as the tap, and only navigate it to the real URL once we have it. */
+export async function openDocument(att: ClientAttachment): Promise<void> {
+  if (Platform.OS === 'web') {
+    const tab = window.open('', '_blank');
+    if (!tab) throw new Error('popup_blocked');
+    try {
+      const url = att.path ? await getDocumentUrl(att.path) : att.url;
+      if (!url) { tab.close(); return; }
+      tab.location.href = url;
+    } catch (e) {
+      tab.close();
+      throw e;
+    }
+    return;
+  }
+
+  const url = att.path ? await getDocumentUrl(att.path) : att.url;
+  if (url) await Linking.openURL(url);
 }
 
 /** Remove a stored document. */

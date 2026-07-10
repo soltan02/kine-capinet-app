@@ -32,7 +32,14 @@ interface Props {
   route?: { params?: { defaultDate?: string; clientId?: string; appointment?: Appointment } };
 }
 
-const TYPES: AppointmentType[] = ['initial', 'session', 'assessment', 'discharge'];
+// The clinic's actual services (fracture_surgery..relaxation_massage) sit
+// alongside the original generic workflow stages (initial/session/
+// assessment/discharge) — both are valid choices when booking.
+const TYPES: AppointmentType[] = [
+  'initial', 'session', 'assessment', 'discharge',
+  'fracture_surgery', 'joint_muscle_pain', 'acupuncture', 'cupping',
+  'leech_therapy', 'bloodletting', 'relaxation_massage',
+];
 const STATUSES: AppointmentStatus[] = ['scheduled', 'confirmed', 'completed', 'cancelled', 'no_show'];
 
 export default function AddAppointmentScreen({ navigation, route }: Props) {
