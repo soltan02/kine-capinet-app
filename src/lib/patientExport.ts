@@ -63,5 +63,5 @@ export async function exportPatientPdf(client: Client, includeBilling: boolean):
   ]);
 
   const html = buildPatientHtml(client, appointments || [], sessionLogs || [], includeBilling ? (paymentsResult.data || []) : null);
-  await presentHtmlDocument(html, `Kine Cabinet — ${client.first_name} ${client.last_name}`);
+  await presentHtmlDocument(html, `Cabinet Azzabi Farouk — ${client.first_name} ${client.last_name}`);
 }

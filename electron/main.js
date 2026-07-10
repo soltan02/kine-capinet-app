@@ -100,7 +100,7 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
     },
-    title: 'Kine Cabinet',
+    title: 'Cabinet Azzabi Farouk',
   });
 
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {

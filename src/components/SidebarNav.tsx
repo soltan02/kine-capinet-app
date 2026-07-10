@@ -43,9 +43,9 @@ export default function SidebarNav({ state, descriptors, navigation }: BottomTab
     <View style={styles.sidebar}>
       <View style={styles.brand}>
         <View style={styles.brandMark}>
-          <Text style={styles.brandMarkText}>KC</Text>
+          <Text style={styles.brandMarkText}>AF</Text>
         </View>
-        <Text style={styles.brandName}>Kine Cabinet</Text>
+        <Text style={styles.brandName}>Cabinet Azzabi Farouk</Text>
       </View>
 
       <View style={styles.rows}>
@@ -106,7 +106,8 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
   },
   brandName: {
-    fontSize: FontSize.md,
+    flex: 1,
+    fontSize: FontSize.sm,
     fontWeight: '800',
     color: Colors.textPrimary,
   },

@@ -46,9 +46,9 @@ export function infoGrid(rows: [string, unknown][]): string {
 export function letterhead(title: string, subtitle: string): string {
   return `
     <header class="letterhead">
-      <div class="brandMark">KC</div>
+      <div class="brandMark">AF</div>
       <div class="letterheadText">
-        <div class="clinicName">Kine Cabinet</div>
+        <div class="clinicName">Cabinet Azzabi Farouk</div>
         <h1>${esc(title)}</h1>
         <div class="subtitle">${esc(subtitle)}</div>
       </div>

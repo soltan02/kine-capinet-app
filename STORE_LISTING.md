@@ -17,7 +17,7 @@ Play Store listing should point to a policy URL you'll maintain indefinitely.)
 
 ## App details
 
-- **App name**: Kine Cabinet
+- **App name**: Cabinet Azzabi Farouk
 - **Package name**: `com.kinecabinet.app`
 - **Category**: Medical (or Business — Medical fits a clinical records tool better)
 - **Contact email**: ghailen.zitouni@edu.isetcom.tn
@@ -31,7 +31,7 @@ Gestion de cabinet de kinésithérapie : patients, RDV, facturation, IA.
 ## Full description (French)
 
 ```
-Kine Cabinet est l'application de gestion pensée pour les cabinets de
+Cabinet Azzabi Farouk est l'application de gestion pensée pour les cabinets de
 kinésithérapie tunisiens.
 
 DOSSIERS PATIENTS

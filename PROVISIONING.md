@@ -1,6 +1,6 @@
 # Onboarding a new clinic
 
-This is the repeatable checklist for selling Kine Cabinet to a new clinic. Each
+This is the repeatable checklist for selling Cabinet Azzabi Farouk to a new clinic. Each
 clinic gets its own fully isolated Supabase backend (separate database, no
 data ever crosses between clinics) — the same Android app/Play Store listing
 is reused for every customer; only a one-time **setup code** differs per

@@ -79,5 +79,5 @@ export async function shareBackup(id: string): Promise<void> {
 
   const dateStr = String(data.created_at).slice(0, 10);
   const html = buildBackupHtml(data.payload, dateStr);
-  await presentHtmlDocument(html, 'Kine Cabinet — sauvegarde');
+  await presentHtmlDocument(html, 'Cabinet Azzabi Farouk — sauvegarde');
 }
