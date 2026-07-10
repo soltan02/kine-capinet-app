@@ -31,7 +31,6 @@ export interface CertificateFields {
   periodEnd: string;
   prescribingDoctor: string;
   motif: string;
-  city: string;
   certificateDate: string;
   ordreNumber: string;
 }
@@ -88,7 +87,7 @@ function buildCertificateHtml(f: CertificateFields): string {
     </div>
 
     <div class="signatureBlock">
-      <div>Fait à <span class="fieldLine">${escBlank(f.city)}</span>, le <span class="fieldLine">${esc(f.certificateDate)}</span></div>
+      <div>Fait le <span class="fieldLine">${esc(f.certificateDate)}</span></div>
       <div>
         <div class="signatureLabel">Signature et cachet</div>
         <div class="signatureBox"></div>

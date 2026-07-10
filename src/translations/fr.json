@@ -131,8 +131,6 @@
     "certPrescribingDoctor": "Médecin prescripteur",
     "certPrescribingDoctorPlaceholder": "Nom du médecin (optionnel)",
     "certMotif": "Motif / observations",
-    "certCity": "Fait à (ville)",
-    "certCityPlaceholder": "Ville",
     "certDate": "Date du certificat",
     "certOrdreNumber": "N° d'ordre du praticien",
     "certOrdreNumberPlaceholder": "Optionnel",

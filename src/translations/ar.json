@@ -131,8 +131,6 @@
     "certPrescribingDoctor": "الطبيب المعالج",
     "certPrescribingDoctorPlaceholder": "اسم الطبيب (اختياري)",
     "certMotif": "السبب / ملاحظات",
-    "certCity": "حرر في (المدينة)",
-    "certCityPlaceholder": "المدينة",
     "certDate": "تاريخ الشهادة",
     "certOrdreNumber": "رقم انخراط المعالج",
     "certOrdreNumberPlaceholder": "اختياري",

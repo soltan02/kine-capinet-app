@@ -40,7 +40,6 @@ export default function CertificateModal({ visible, client, defaultSessionsCount
   const [certDate, setCertDate] = useState('');
   const [prescribingDoctor, setPrescribingDoctor] = useState('');
   const [motif, setMotif] = useState('');
-  const [city, setCity] = useState('');
   const [ordreNumber, setOrdreNumber] = useState('');
   const [generating, setGenerating] = useState(false);
 
@@ -52,7 +51,6 @@ export default function CertificateModal({ visible, client, defaultSessionsCount
       setCertDate(todayIso());
       setPrescribingDoctor('');
       setMotif(client.diagnosis || '');
-      setCity('');
       setOrdreNumber('');
     }
   }, [visible, client]);
@@ -70,7 +68,6 @@ export default function CertificateModal({ visible, client, defaultSessionsCount
       periodEnd: toDisplayDate(periodEnd),
       prescribingDoctor,
       motif,
-      city,
       certificateDate: toDisplayDate(certDate),
       ordreNumber,
     };
@@ -115,12 +112,6 @@ export default function CertificateModal({ visible, client, defaultSessionsCount
               onChangeText={setMotif}
               multiline
               numberOfLines={3}
-            />
-            <TextField
-              label={t('clients.certCity')}
-              value={city}
-              onChangeText={setCity}
-              placeholder={t('clients.certCityPlaceholder')}
             />
             <DateTimeField mode="date" label={t('clients.certDate')} value={certDate} onChange={setCertDate} />
             <TextField
