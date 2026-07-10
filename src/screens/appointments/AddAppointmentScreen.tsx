@@ -19,6 +19,7 @@ import { useAppointmentsStore, useAuthStore, useClientsStore } from '../../lib/s
 import DateTimeField from '../../components/DateTimeField';
 import SectionLabel from '../../components/SectionLabel';
 import SelectableChip from '../../components/SelectableChip';
+import SelectDropdown from '../../components/SelectDropdown';
 import TextField from '../../components/TextField';
 import PatientPicker from '../../components/PatientPicker';
 
@@ -173,18 +174,12 @@ export default function AddAppointmentScreen({ navigation, route }: Props) {
           </View>
 
           <View style={styles.sectionCard}>
-            <SectionLabel>{t('appointments.selectType')}</SectionLabel>
-            <View style={styles.chipRow}>
-              {TYPES.map((item) => (
-                <SelectableChip
-                  key={item}
-                  label={t(`appointments.types.${item}`)}
-                  selected={item === type}
-                  onPress={() => setType(item)}
-                  color={Colors.accent}
-                />
-              ))}
-            </View>
+            <SelectDropdown
+              label={t('appointments.selectType')}
+              options={TYPES.map((item) => ({ value: item, label: t(`appointments.types.${item}`) }))}
+              selectedValue={type}
+              onSelect={(value) => setType(value as AppointmentType)}
+            />
           </View>
 
           <View style={styles.sectionCard}>

@@ -1,5 +1,5 @@
 {
-  "latestVersion": "1.7.2",
+  "latestVersion": "1.7.3",
   "apkUrl": "https://expo.dev/accounts/soltan0102/projects/kine-cabinet-app/builds",
-  "notes": "Types de séances du cabinet (acupuncture, hijama, hirudothérapie, massage...), correctifs d'ouverture des documents et d'export de dossier sur le web, cloche de rappels de séances."
+  "notes": "Le type de séance est maintenant une liste déroulante (au lieu de 11 boutons), types de séances du cabinet, correctifs d'ouverture des documents et d'export de dossier sur le web, cloche de rappels de séances."
 }
