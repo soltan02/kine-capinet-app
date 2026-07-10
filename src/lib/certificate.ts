@@ -1,5 +1,14 @@
 import { esc, openPrintWindow, closePrintWindow, presentHtmlDocument } from './pdfHelpers';
 
+// Unlike esc() (which shows "—" for missing data in a filled-in table),
+// these fields are meant to be blank lines the kiné fills in by hand
+// after printing if left empty — an em dash there would misleadingly
+// read as "none" instead of "not filled in yet".
+function escBlank(v: unknown): string {
+  if (v === null || v === undefined) return '';
+  return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 // ─── Kinésithérapie certificate ───────────────────────────────
 // Mirrors the cabinet's real letterhead (business card) and the
 // standard "certificat médical de kinésithérapie" template used for
@@ -54,7 +63,7 @@ function buildCertificateHtml(f: CertificateFields): string {
       <div>
         <div class="cabinetName">${esc(CABINET_NAME)}</div>
         <div>${esc(PRACTITIONER_NAME)} — ${esc(PRACTITIONER_TITLE)}</div>
-        <div>N° d'ordre : ${esc(f.ordreNumber)}</div>
+        <div>N° d'ordre : ${escBlank(f.ordreNumber)}</div>
       </div>
       <div style="text-align:right">
         <div>${esc(CABINET_ADDRESS)}</div>
@@ -72,14 +81,14 @@ function buildCertificateHtml(f: CertificateFields): string {
       <p>né(e) le <span class="fieldLine">${esc(f.dob)}</span></p>
       <p>Nombre de séances effectuées : <span class="fieldLine">${esc(f.sessionsCount)}</span></p>
       <p>Période du <span class="fieldLine">${esc(f.periodStart)}</span> au <span class="fieldLine">${esc(f.periodEnd)}</span></p>
-      <p>Sur prescription du Dr <span class="fieldLine">${esc(f.prescribingDoctor)}</span></p>
+      <p>Sur prescription du Dr <span class="fieldLine">${escBlank(f.prescribingDoctor)}</span></p>
       <p>Motif / observations :</p>
-      <p class="motifBox">${esc(f.motif)}</p>
+      <p class="motifBox">${escBlank(f.motif)}</p>
       <p style="margin-top: 26px;">Certificat établi à la demande de l'intéressé(e) et remis en main propre pour faire valoir ce que de droit.</p>
     </div>
 
     <div class="signatureBlock">
-      <div>Fait à <span class="fieldLine">${esc(f.city)}</span>, le <span class="fieldLine">${esc(f.certificateDate)}</span></div>
+      <div>Fait à <span class="fieldLine">${escBlank(f.city)}</span>, le <span class="fieldLine">${esc(f.certificateDate)}</span></div>
       <div>
         <div class="signatureLabel">Signature et cachet</div>
         <div class="signatureBox"></div>
