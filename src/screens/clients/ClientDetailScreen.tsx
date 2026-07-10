@@ -29,6 +29,7 @@ import ProgressTimeline from '../../components/ProgressTimeline';
 import { SkeletonList } from '../../components/Skeleton';
 import Button from '../../components/Button';
 import DocumentViewerModal from '../../components/DocumentViewerModal';
+import CertificateModal from '../../components/CertificateModal';
 
 const TABS = ['info', 'appointments', 'sessions', 'progress', 'billing'] as const;
 type Tab = typeof TABS[number];
@@ -59,6 +60,8 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
   const [showExportChoice, setShowExportChoice] = useState(false);
   const [viewerAtt, setViewerAtt] = useState<ClientAttachment | null>(null);
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
+  const [showCertificate, setShowCertificate] = useState(false);
+  const [certDefaults, setCertDefaults] = useState({ sessionsCount: 0, periodStart: '', periodEnd: '' });
   const { isDesktop } = useResponsive();
 
   // On web, a 3-button Alert.alert falls back to window.confirm(), which
@@ -122,6 +125,22 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
     } catch {
       Alert.alert(t('common.error'), t('clients.openFailed'));
     }
+  };
+
+  const handleOpenCertificate = async () => {
+    const { data } = await supabase
+      .from('appointments')
+      .select('date')
+      .eq('client_id', client.id)
+      .eq('status', 'completed')
+      .order('date', { ascending: true });
+    const dates = (data || []).map((a: any) => a.date as string);
+    setCertDefaults({
+      sessionsCount: dates.length,
+      periodStart: dates[0] || '',
+      periodEnd: dates[dates.length - 1] || '',
+    });
+    setShowCertificate(true);
   };
 
   const fullName = `${client.first_name} ${client.last_name}`;
@@ -319,12 +338,22 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
               </View>
             ) : null}
 
+            {canViewDocs ? (
+              <Button
+                title={t('clients.generateCertificate')}
+                onPress={handleOpenCertificate}
+                icon="ribbon-outline"
+                variant="secondary"
+                style={{ marginTop: Spacing.lg }}
+              />
+            ) : null}
+
             {canAnalyze ? (
               <Button
                 title={t('ai.analyzeButton')}
                 onPress={() => navigation.navigate('PatientAnalysis', { clientId: client.id, clientName: fullName })}
                 icon="sparkles"
-                style={{ marginTop: Spacing.lg }}
+                style={{ marginTop: Spacing.sm }}
               />
             ) : null}
 
@@ -514,6 +543,16 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
         url={viewerUrl}
         mime={viewerAtt?.mime}
         onClose={() => { setViewerAtt(null); setViewerUrl(null); }}
+      />
+
+      <CertificateModal
+        visible={showCertificate}
+        client={client}
+        defaultSessionsCount={certDefaults.sessionsCount}
+        defaultPeriodStart={certDefaults.periodStart}
+        defaultPeriodEnd={certDefaults.periodEnd}
+        onClose={() => setShowCertificate(false)}
+        onError={(msg) => Alert.alert(t('common.error'), msg)}
       />
     </SafeAreaView>
   );
