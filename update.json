@@ -1,5 +1,5 @@
 {
-  "latestVersion": "1.7.3",
+  "latestVersion": "1.7.4",
   "apkUrl": "https://expo.dev/accounts/soltan0102/projects/kine-cabinet-app/builds",
-  "notes": "Le type de séance est maintenant une liste déroulante (au lieu de 11 boutons), types de séances du cabinet, correctifs d'ouverture des documents et d'export de dossier sur le web, cloche de rappels de séances."
+  "notes": "Génération de certificat médical par patient, correctif de l'écran blanc au changement de thème, changement de langue sans redémarrage manuel, rôle affiché à côté du nom sur le tableau de bord."
 }

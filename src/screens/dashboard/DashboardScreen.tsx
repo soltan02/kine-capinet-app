@@ -208,7 +208,14 @@ export default function DashboardScreen({ navigation }: { navigation: any }) {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>{getGreeting(t)},</Text>
-            <Text style={styles.userName}>{profile?.full_name?.split(' ')[0] || t('dashboard.doctorFallback')} 👋</Text>
+            <View style={styles.userNameRow}>
+              <Text style={styles.userName}>{profile?.full_name?.split(' ')[0] || t('dashboard.doctorFallback')}</Text>
+              {profile?.role ? (
+                <View style={styles.roleBadge}>
+                  <Text style={styles.roleBadgeText}>{t(`settings.roles.${profile.role}`)}</Text>
+                </View>
+              ) : null}
+            </View>
           </View>
           <View style={styles.headerActions}>
             <NotificationBell />
@@ -422,11 +429,27 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontWeight: '500',
   },
+  userNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
   userName: {
     fontSize: FontSize.xxl,
     fontWeight: '800',
     color: Colors.textPrimary,
     letterSpacing: -0.5,
+  },
+  roleBadge: {
+    backgroundColor: Colors.primaryLight,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderRadius: BorderRadius.full,
+  },
+  roleBadgeText: {
+    fontSize: FontSize.xs,
+    fontWeight: '700',
+    color: Colors.primary,
   },
   headerActions: {
     flexDirection: 'row',

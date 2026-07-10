@@ -125,6 +125,7 @@
     "generateCertificate": "إصدار شهادة طبية",
     "certificateGenerate": "إصدار الشهادة",
     "certificateFailed": "فشل إصدار الشهادة",
+    "certDob": "تاريخ الميلاد",
     "certSessionsCount": "عدد الحصص المنجزة",
     "certPeriodStart": "الفترة — البداية",
     "certPeriodEnd": "الفترة — النهاية",

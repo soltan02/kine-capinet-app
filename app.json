@@ -3,7 +3,7 @@
     "owner": "soltan0102",
     "name": "Cabinet Farouk",
     "slug": "kine-cabinet-app",
-    "version": "1.7.3",
+    "version": "1.7.4",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -11,6 +11,7 @@
       "supportsTablet": true
     },
     "android": {
+      "backgroundColor": "#010605",
       "adaptiveIcon": {
         "backgroundColor": "#0D9488",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -19,7 +20,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.kinecabinet.app",
-      "versionCode": 20
+      "versionCode": 21
     },
     "web": {
       "favicon": "./assets/favicon.png"

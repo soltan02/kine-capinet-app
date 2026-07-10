@@ -125,6 +125,7 @@
     "generateCertificate": "Générer un certificat",
     "certificateGenerate": "Générer le certificat",
     "certificateFailed": "Échec de la génération du certificat",
+    "certDob": "Date de naissance",
     "certSessionsCount": "Nombre de séances effectuées",
     "certPeriodStart": "Période — début",
     "certPeriodEnd": "Période — fin",

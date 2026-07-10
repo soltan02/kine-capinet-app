@@ -34,6 +34,7 @@ const todayIso = (): string => {
 export default function CertificateModal({ visible, client, defaultSessionsCount, defaultPeriodStart, defaultPeriodEnd, onClose, onError }: Props) {
   const { t } = useTranslation();
   const { isDesktop } = useResponsive();
+  const [dob, setDob] = useState('');
   const [sessionsCount, setSessionsCount] = useState('');
   const [periodStart, setPeriodStart] = useState('');
   const [periodEnd, setPeriodEnd] = useState('');
@@ -45,6 +46,7 @@ export default function CertificateModal({ visible, client, defaultSessionsCount
 
   useEffect(() => {
     if (visible && client) {
+      setDob(client.date_of_birth || '');
       setSessionsCount(String(defaultSessionsCount || ''));
       setPeriodStart(defaultPeriodStart);
       setPeriodEnd(defaultPeriodEnd);
@@ -62,7 +64,7 @@ export default function CertificateModal({ visible, client, defaultSessionsCount
     setGenerating(true);
     const fields: CertificateFields = {
       patientName: `${client.first_name} ${client.last_name}`,
-      dob: toDisplayDate(client.date_of_birth || ''),
+      dob: toDisplayDate(dob),
       sessionsCount,
       periodStart: toDisplayDate(periodStart),
       periodEnd: toDisplayDate(periodEnd),
@@ -92,6 +94,7 @@ export default function CertificateModal({ visible, client, defaultSessionsCount
           </View>
 
           <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+            <DateTimeField mode="date" label={t('clients.certDob')} value={dob} onChange={setDob} />
             <TextField
               label={t('clients.certSessionsCount')}
               value={sessionsCount}

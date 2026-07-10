@@ -33,24 +33,30 @@ export default function SettingsScreen({ navigation }: { navigation: any }) {
   const [themeMode, setThemeModeState] = useState<ThemeMode>(getThemeMode());
   const currentLang = i18n.language as 'fr' | 'ar';
 
+  // Reloads the app so already-created StyleSheets (theme) and
+  // I18nManager's RTL layout direction (language) actually take effect —
+  // both are baked in at module-load time and don't update on re-render
+  // alone. Auto-reloading instead of asking the user to restart manually
+  // avoids the confusing "already changed but asks to restart" message.
+  const reloadApp = async () => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.location.reload();
+      return;
+    }
+    try {
+      await Updates.reloadAsync();
+    } catch {
+      // Not available in this runtime (e.g. Expo Go) — no automatic
+      // reload possible, but the change is already saved and will apply
+      // next time the app starts.
+    }
+  };
+
   const handleThemeSwitch = async (mode: ThemeMode) => {
     if (mode === themeMode) return;
     setThemeModeState(mode);
     await persistThemeMode(mode);
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      // Web can apply instantly with a reload
-      window.location.reload();
-      return;
-    }
-    // Native: reload the JS bundle so every screen's styles are rebuilt
-    // with the new palette — no manual app restart needed.
-    try {
-      await Updates.reloadAsync();
-    } catch {
-      // Not available in this runtime (e.g. Expo Go) — fall back to asking
-      // the user to restart manually.
-      Alert.alert(t('settings.appearance'), t('settings.themeRestart'));
-    }
+    await reloadApp();
   };
 
   const handleLanguageSwitch = async (lang: 'fr' | 'ar') => {
@@ -58,13 +64,7 @@ export default function SettingsScreen({ navigation }: { navigation: any }) {
     setSwitchingLang(true);
     await switchLanguage(lang);
     setSwitchingLang(false);
-    // In production, you'd use expo-updates to reload
-    Alert.alert(
-      lang === 'ar' ? 'تغيير اللغة' : 'Changement de langue',
-      lang === 'ar'
-        ? 'أعد تشغيل التطبيق لتفعيل العربية بالكامل'
-        : 'Redémarrez l\'application pour activer le français',
-    );
+    await reloadApp();
   };
 
   const handleLogout = () => {
