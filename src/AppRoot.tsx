@@ -11,6 +11,7 @@ import { useAuthStore } from './lib/store';
 import { initI18n } from './lib/i18n';
 import { hasSeenOnboarding, markOnboardingSeen } from './lib/onboarding';
 import { checkForUpdate, openUpdateUrl } from './lib/updateChecker';
+import { registerForPushNotifications } from './lib/pushNotifications';
 import { Alert } from './lib/alert';
 import AppIntro from './components/AppIntro';
 import { Colors, FontSize, Spacing, loadStoredTheme } from './constants/theme';
@@ -200,6 +201,20 @@ export default function AppRoot() {
         // Not available in this runtime (Expo Go / dev client) or offline — silent no-op.
       }
     })();
+    return () => { mounted = false; };
+  }, [accountId]);
+
+  // Register for real Android push notifications once per session after
+  // login — shows the standard OS permission prompt the first time. Web
+  // keeps the existing in-app-only reminder bell (useSessionReminders.ts),
+  // no browser push for now.
+  useEffect(() => {
+    if (!accountId) return;
+    let mounted = true;
+    registerForPushNotifications().then(async (token) => {
+      if (!token || !mounted) return;
+      await supabase.from('profiles').update({ push_token: token }).eq('id', accountId);
+    });
     return () => { mounted = false; };
   }, [accountId]);
 

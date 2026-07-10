@@ -46,6 +46,7 @@ export type Profile = {
   phone?: string;
   role: UserRole;
   avatar_url?: string;
+  push_token?: string;
   created_at: string;
 };
 

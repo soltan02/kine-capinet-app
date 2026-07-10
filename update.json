@@ -1,5 +1,5 @@
 {
-  "latestVersion": "1.7.4",
+  "latestVersion": "1.7.5",
   "apkUrl": "https://expo.dev/accounts/soltan0102/projects/kine-cabinet-app/builds",
-  "notes": "Génération de certificat médical par patient, correctif de l'écran blanc au changement de thème, changement de langue sans redémarrage manuel, rôle affiché à côté du nom sur le tableau de bord."
+  "notes": "Notifications push pour les rappels de séance (Android) — l'application demande l'autorisation et notifie même écran verrouillé ou app fermée."
 }

@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   phone TEXT,
   role TEXT NOT NULL DEFAULT 'staff' CHECK (role IN ('admin', 'therapist', 'receptionist', 'staff')),
   avatar_url TEXT,
+  push_token TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -61,6 +62,7 @@ CREATE TABLE IF NOT EXISTS appointments (
   )),
   status TEXT NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'confirmed', 'completed', 'cancelled', 'no_show')),
   notes TEXT,
+  reminder_sent_at TIMESTAMPTZ,
   created_by UUID REFERENCES profiles(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -462,5 +464,31 @@ DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'weekly-clinic-backup') THEN
     PERFORM cron.schedule('weekly-clinic-backup', '0 3 * * 0', $cron$SELECT public.create_data_backup();$cron$);
+  END IF;
+END $$;
+
+-- ============================================================
+-- SESSION REMINDER PUSH NOTIFICATIONS (Android)
+-- Dispatches every 5 minutes via the send-session-reminders edge
+-- function, which pushes to the assigned staff member's Android device
+-- through Expo's push service for appointments starting within the next
+-- 30 minutes. Requires the pg_net extension enabled once (Dashboard →
+-- Database → Extensions, or CREATE EXTENSION IF NOT EXISTS pg_net;).
+-- ============================================================
+CREATE EXTENSION IF NOT EXISTS pg_net;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'send-session-reminders') THEN
+    PERFORM cron.schedule(
+      'send-session-reminders',
+      '*/5 * * * *',
+      $cron$
+      SELECT net.http_post(
+        url := 'https://ttuxuqjefezulbczdtix.supabase.co/functions/v1/send-session-reminders',
+        headers := '{"Content-Type": "application/json"}'::jsonb
+      );
+      $cron$
+    );
   END IF;
 END $$;
