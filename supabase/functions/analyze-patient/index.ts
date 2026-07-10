@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.201.0/http/server.ts";
-import { encodeBase64 } from "https://deno.land/std@0.201.0/encoding/base64.ts";
+import { encode as encodeBase64 } from "https://deno.land/std@0.201.0/encoding/base64.ts";
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 // ─── AI Patient Analysis (Gemini 2.5 Flash) ──────────────────

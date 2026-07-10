@@ -20,7 +20,11 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.kinecabinet.app",
-      "versionCode": 21
+      "versionCode": 21,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -51,6 +55,12 @@
       "eas": {
         "projectId": "1d64204e-f88e-41b1-8eba-79ed05b84449"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/1d64204e-f88e-41b1-8eba-79ed05b84449"
     }
   }
 }
