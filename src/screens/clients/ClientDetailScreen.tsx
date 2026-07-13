@@ -55,7 +55,11 @@ export default function ClientDetailScreen({ navigation, route }: { navigation: 
   const canViewDocs = can('sessions:view'); // admin + kiné only
   const canAnalyze = can('ai:analyze'); // admin + kiné only
   const canViewBilling = can('billing:view'); // admin + receptionist only
-  const visibleTabs = canViewBilling ? TABS : TABS.filter((tab) => tab !== 'billing');
+  const visibleTabs = TABS.filter((tab) => {
+    if (tab === 'billing') return canViewBilling;
+    if (tab === 'sessions' || tab === 'progress') return canViewDocs;
+    return true;
+  });
   const [exporting, setExporting] = useState(false);
   const [showExportChoice, setShowExportChoice] = useState(false);
   const [viewerAtt, setViewerAtt] = useState<ClientAttachment | null>(null);
